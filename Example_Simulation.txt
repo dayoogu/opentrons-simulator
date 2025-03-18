@@ -1,0 +1,32 @@
+Transferring 300.0 from A1 of NEST 12 Well Reservoir 15 mL on slot 6 to A1 of UCL 96 Well Plate 1000 �L on slot 3
+	Picking up tip from A1 of Opentrons OT-2 96 Tip Rack 300 �L on slot 9
+	Aspirating 300.0 uL from A1 of NEST 12 Well Reservoir 15 mL on slot 6 at 94.0 uL/sec
+	Dispensing 300.0 uL into A1 of UCL 96 Well Plate 1000 �L on slot 3 at 94.0 uL/sec
+	Aspirating 300.0 uL from A1 of NEST 12 Well Reservoir 15 mL on slot 6 at 94.0 uL/sec
+	Dispensing 300.0 uL into A4 of UCL 96 Well Plate 1000 �L on slot 3 at 94.0 uL/sec
+	Aspirating 300.0 uL from A1 of NEST 12 Well Reservoir 15 mL on slot 6 at 94.0 uL/sec
+	Dispensing 300.0 uL into A6 of UCL 96 Well Plate 1000 �L on slot 3 at 94.0 uL/sec
+	Aspirating 300.0 uL from A1 of NEST 12 Well Reservoir 15 mL on slot 6 at 94.0 uL/sec
+	Dispensing 300.0 uL into A10 of UCL 96 Well Plate 1000 �L on slot 3 at 94.0 uL/sec
+	Dropping tip into Trash Bin on slot 12
+Picking up tip from A2 of Opentrons OT-2 96 Tip Rack 300 �L on slot 9
+Transferring 300.0 from H1 of UCL 96 Well Plate 1000 �L on slot 3 to H2 of UCL 96 Well Plate 1000 �L on slot 3
+	Aspirating 300.0 uL from H1 of UCL 96 Well Plate 1000 �L on slot 3 at 92.86 uL/sec
+	Dispensing 300.0 uL into H2 of UCL 96 Well Plate 1000 �L on slot 3 at 92.86 uL/sec
+Transferring 300.0 from H4 of UCL 96 Well Plate 1000 �L on slot 3 to H3 of UCL 96 Well Plate 1000 �L on slot 3
+	Aspirating 300.0 uL from H4 of UCL 96 Well Plate 1000 �L on slot 3 at 92.86 uL/sec
+	Dispensing 300.0 uL into H3 of UCL 96 Well Plate 1000 �L on slot 3 at 92.86 uL/sec
+Transferring 300.0 from A2 of NEST 12 Well Reservoir 15 mL on slot 6 to H7 of UCL 96 Well Plate 1000 �L on slot 3
+	Aspirating 300.0 uL from A2 of NEST 12 Well Reservoir 15 mL on slot 6 at 92.86 uL/sec
+	Dispensing 300.0 uL into H7 of UCL 96 Well Plate 1000 �L on slot 3 at 92.86 uL/sec
+	Aspirating 300.0 uL from A2 of NEST 12 Well Reservoir 15 mL on slot 6 at 92.86 uL/sec
+	Dispensing 300.0 uL into H8 of UCL 96 Well Plate 1000 �L on slot 3 at 92.86 uL/sec
+	Aspirating 300.0 uL from A2 of NEST 12 Well Reservoir 15 mL on slot 6 at 92.86 uL/sec
+	Dispensing 300.0 uL into H11 of UCL 96 Well Plate 1000 �L on slot 3 at 92.86 uL/sec
+	Aspirating 300.0 uL from A2 of NEST 12 Well Reservoir 15 mL on slot 6 at 92.86 uL/sec
+	Dispensing 300.0 uL into H12 of UCL 96 Well Plate 1000 �L on slot 3 at 92.86 uL/sec
+	Aspirating 300.0 uL from A2 of NEST 12 Well Reservoir 15 mL on slot 6 at 92.86 uL/sec
+	Dispensing 300.0 uL into A7 of UCL 96 Well Plate 1000 �L on slot 3 at 92.86 uL/sec
+	Aspirating 300.0 uL from A2 of NEST 12 Well Reservoir 15 mL on slot 6 at 92.86 uL/sec
+	Dispensing 300.0 uL into A8 of UCL 96 Well Plate 1000 �L on slot 3 at 92.86 uL/sec
+Dropping tip into Trash Bin on slot 12
