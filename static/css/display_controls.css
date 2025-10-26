@@ -1,0 +1,104 @@
+/* Display Controls */
+#display-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Adds some space between the stacked items */
+}
+
+
+#labware-keys-container, 
+#color-selectors {
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+#labware-keys-container {
+  max-width: 550px;
+  margin: 15px;
+  flex-wrap: wrap;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+#labware-keys-container {
+  width: 280px;
+  margin: 0;
+  position: sticky;
+  top: 20px;
+  flex-shrink: 0;
+}
+
+#labware-keys-container h4 {
+  margin-top: 0;
+  color: #333;
+}
+
+#labware-keys-list {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+#labware-keys-list li {
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+}
+
+#labware-keys-list li:last-child {
+  border-bottom: none;
+}
+
+/* Color Selectors Section */
+#color-selectors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 16px;
+  background: #f9f9f9;
+}
+
+.labware-section {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 12px 16px;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  min-width: 220px;
+}
+
+.labware-section h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 1.1em;
+  color: #333;
+}
+
+.color-inputs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grid-container {
+  margin-top: 8px;
+}
+
+.grid-box {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.grid-box:active {
+  outline: 2px solid #00000033;
+}

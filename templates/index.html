@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="/static/js/p5.js"></script>
+    <script src="/static/js/p5.sound.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/style.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/canvas_controls.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/display_controls.css">
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="main-content-wrapper">
+        <div id="canvas-container">
+          <div class="controls">
+            <textarea id="protocolInput" placeholder="Enter the full protocol python script..."></textarea>
+            <div class="button-group">
+              <form> Robot: 
+                <label>
+                  <input type="radio" name="choice" value="OT-2">
+                  OT-2
+                </label>
+                <label>
+                  <input type="radio" name="choice" value="Flex" checked>
+                  Flex
+                </label>
+              </form>
+              <label for="jsonUpload" class="upload-button">
+                Upload Custom Labware JSON
+                <input type="file" id="jsonUpload" accept=".json" multiple style="display: none;">
+              </label>
+              <button id="addProtocol">Upload protocol</button>
+              <button id="runButton" disabled>Start</button>
+              <button id="rewindButton" disabled>Play</button>
+            </div>
+            <div class="slider-container">
+              <label for="speedSlider">Speed (steps / second):</label>
+              <div class="slider-labels">
+                <span>1</span>
+                <input type="range" id="speedSlider" min="1" max="20" value="1" step="1">
+                <span>20</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="display-controls">
+          <div id="labware-keys-container">
+            <h4>Uploaded Custom Labware</h3>
+            <ul id="labware-keys-list"></ul>
+          </div>
+          <div id="color-selectors">
+            <h4>Format simulation display</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="/static/js/display_table.js"></script>
+    <script src="/static/js/upload_labware.js"></script>
+    <script src="/static/js/upload_protocol.js"></script>
+    <script src="/static/js/color_buttons.js"></script>
+    <script src="/static/js/sketch.js"></script>
+  </body>
+</html>

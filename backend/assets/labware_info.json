@@ -1,0 +1,143 @@
+{
+    "12": {
+        "module": {},
+        "adapter": null,
+        "labware": {},
+        "lid_stack": {},
+        "load_name": "opentrons_1_trash_1100ml_fixed",
+        "name": "Trash Bin",
+        "count": 0
+    },
+    "1": {
+        "module": {
+            "load_name": "heaterShakerModuleV1",
+            "name": "Heater-Shaker",
+            "latch": null,
+            "lid": null,
+            "temp": null,
+            "shaker": null
+        },
+        "adapter": null,
+        "labware": {
+            "rows": 6,
+            "cols": 8,
+            "lid": null,
+            "type": "Well Plate",
+            "movement_path": [
+                "1"
+            ],
+            "original_load_name": "group3rack2_48_wellplate_1000ul",
+            "movement_pos": 0,
+            "name": "Group3_Rack2 48 Well Plate 1000 \u00b5L",
+            "volume": 1000,
+            "diameter": 7,
+            "width": null,
+            "length": null,
+            "spacing": {
+                "x": 6,
+                "y": 6
+            }
+        },
+        "lid_stack": {}
+    },
+    "9": {
+        "module": {},
+        "adapter": null,
+        "labware": {
+            "rows": 8,
+            "cols": 12,
+            "lid": null,
+            "type": "Tip Rack",
+            "movement_path": [
+                "9"
+            ],
+            "original_load_name": "opentrons_96_tiprack_300ul",
+            "movement_pos": 0,
+            "name": "Opentrons OT-2 96 Tip Rack 300 \u00b5L",
+            "volume": null,
+            "diameter": 5,
+            "width": null,
+            "length": null,
+            "spacing": {
+                "x": 4,
+                "y": 4
+            }
+        },
+        "lid_stack": {}
+    },
+    "8": {
+        "module": {},
+        "adapter": null,
+        "labware": {
+            "rows": 8,
+            "cols": 12,
+            "lid": null,
+            "type": "Tip Rack",
+            "movement_path": [
+                "8"
+            ],
+            "original_load_name": "opentrons_96_tiprack_300ul",
+            "movement_pos": 0,
+            "name": "Opentrons OT-2 96 Tip Rack 300 \u00b5L",
+            "volume": null,
+            "diameter": 5,
+            "width": null,
+            "length": null,
+            "spacing": {
+                "x": 4,
+                "y": 4
+            }
+        },
+        "lid_stack": {}
+    },
+    "6": {
+        "module": {},
+        "adapter": null,
+        "labware": {
+            "rows": 2,
+            "cols": 4,
+            "lid": null,
+            "type": "Tube Rack",
+            "movement_path": [
+                "6"
+            ],
+            "original_load_name": "group3rack1_8_tuberack_40000ul",
+            "movement_pos": 0,
+            "name": "Group3_Rack1 8 Tube Rack with unknowntube 40 mL",
+            "volume": 40000,
+            "diameter": 17,
+            "width": null,
+            "length": null,
+            "spacing": {
+                "x": 14,
+                "y": 19
+            }
+        },
+        "lid_stack": {}
+    },
+    "5": {
+        "module": {},
+        "adapter": null,
+        "labware": {
+            "rows": 1,
+            "cols": 12,
+            "lid": null,
+            "type": "Reservoir",
+            "movement_path": [
+                "5"
+            ],
+            "original_load_name": "nest_12_reservoir_15ml",
+            "movement_pos": 0,
+            "name": "NEST 12 Well Reservoir 15 mL",
+            "volume": 15000,
+            "diameter": null,
+            "width": 8,
+            "length": 71,
+            "spacing": {
+                "x": 1,
+                "y": null
+            }
+        },
+        "lid_stack": {}
+    }
+}

@@ -1,0 +1,47 @@
+/* Global Styles */
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  padding: 10px;
+}
+
+.main-content-wrapper {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+#canvas-container {
+  flex: 1;
+  /*max-width: calc(100% - 300px); /* Adjust based on your needs */
+}
+
+/* Upload Button Styles (used in controls) */
+.upload-button {
+  display: inline-block;
+  padding: 8px 16px;
+  margin-right: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.upload-button:hover {
+  background-color: #45a049;
+}
+
+.upload-button.has-files {
+  background-color: #2196F3;
+}
+
+input[type="file"] {
+  display: none;
+}
