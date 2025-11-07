@@ -80,7 +80,6 @@ function getSelectedRobot() {
   return selected.value;
 }
 
-
 function selectRobot(){
     if (!changedRobot && selectedRobot !== null) return selectedRobot;
     let robot = getSelectedRobot();
@@ -313,6 +312,9 @@ function drawReservoir(x, y, slot) {
             let wellX = centerX + col * (wellSizeX + reservoirSpacingX);
             let wellY = centerY + row * (wellSizeY + reservoirSpacingY);
             let levelFraction = wellLevels[row][col] / totalReservoirVolume;
+            if (wellLevels[row][col] < 0){
+                alert(`${labwaresDict[slot]["labware"].name} on slot ${slot} is below 0 uL.`);
+            }
             fill(255);
             if (labwaresDict[slot]["labware"].diameter == null){
                 rect(wellX, wellY, wellSizeX, wellSizeY);
@@ -388,6 +390,9 @@ function drawTubeRack(x, y, slot) {
             let tubeX = centerX + col * (tubeSizeX + tubeSpacingX);
             let tubeY = centerY + row * (tubeSizeY + tubeSpacingY);
             let levelFraction = tubeLevels[row][col] / totalReservoirVolume;
+            if (tubeLevels[row][col] < 0){
+                alert(`${labwaresDict[slot]["labware"].name} on slot ${slot} is below 0 uL.`);
+            }
             fill(255);
             if (labwaresDict[slot]["labware"].diameter == null){
                 rect(tubeX, tubeY, tubeSizeX, tubeSizeY);
@@ -458,6 +463,9 @@ function drawWellPlate(x, y, slot) {
         for (let col = 0; col < wellCols; col++) {
             let wellX = centerX + col * (wellSizeX + wellSpacingX);
             let wellY = centerY + row * (wellSizeY + wellSpacingY);
+            if (wellLevels[row][col] < 0){
+                alert(`${labwaresDict[slot]["labware"].name} on slot ${slot} is below 0 uL.`);
+            }
 
             if (wellLevels[row][col] > 0) {
                 let color = stateDict.wellplate[slot][row][col];
@@ -744,6 +752,163 @@ function getSourceColors(colorInputs) {
     return result;
 }
 
+function parseNozzleLayout(line) {
+  const rows = ["A","B","C","D","E","F","G","H"];
+  const getRowCol = (well) => {
+    const m = well.match(/^([A-H])(\d{1,2})$/);
+    if (!m) return [null, null];
+    return [rows.indexOf(m[1]) + 1, parseInt(m[2], 10)];
+  };
+
+  const posMatch = line.match(/on (\w+) mount/);
+  const pos = posMatch ? posMatch[1].toLowerCase() : null;
+
+  // Extract primary nozzle for all configurations
+  const primaryMatch = line.match(/primaryNozzle='([A-H]\d{1,2})'/);
+  let primary_row = null, primary_col = null;
+  
+  if (primaryMatch) {
+    [primary_row, primary_col] = getRowCol(primaryMatch[1]);
+  }
+
+  // --- ALL ---
+  if (line.includes("AllNozzleLayoutConfiguration")) {
+    const result = {"action": "layout",
+      pos,
+      "layout":null
+    };
+    return result;
+  }
+
+  // --- QUADRANT ---
+  if (line.includes("QuadrantNozzleLayoutConfiguration")) {
+    const backLeftMatch = line.match(/backLeftNozzle='([A-H]\d{1,2})'/);
+    const frontRightMatch = line.match(/frontRightNozzle='([A-H]\d{1,2})'/);
+
+    let start_row = null, end_row = null, start_col = null, end_col = null;
+
+    if (backLeftMatch && frontRightMatch) {
+      const [r1, c1] = getRowCol(backLeftMatch[1]);
+      const [r2, c2] = getRowCol(frontRightMatch[1]);
+      start_row = r1; end_row = r2;
+      start_col = c1; end_col = c2;
+    } else if (primaryMatch) {
+      const [r, c] = getRowCol(primaryMatch[1]);
+      start_row = end_row = r;
+      start_col = end_col = c;
+    }
+
+    // Set primary_row/col, fallback to end_row/end_col if not available
+    return {"action": "layout",
+      pos,
+      "layout":{
+        start_row, 
+        end_row, 
+        start_col, 
+        end_col,
+        primary_row: primary_row !== null ? primary_row : start_row,
+        primary_col: primary_col !== null ? primary_col : start_col}
+    };
+  }
+
+  // --- COLUMN ---
+  if (line.includes("ColumnNozzleLayoutConfiguration")) {
+    const m = line.match(/primaryNozzle='([A-H]\d{1,2})'/);
+    let start_row = 1, end_row = 8, start_col = null, end_col = null;
+    
+    if (m) {
+      const [, col] = getRowCol(m[1]);
+      start_col = end_col = col;
+    }
+
+    return {"action": "layout",
+      pos,
+      "layout":{
+        start_row, 
+        end_row, 
+        start_col, 
+        end_col,
+        primary_row: primary_row !== null ? primary_row : start_row,
+        primary_col: primary_col !== null ? primary_col : start_col}
+    };
+  }
+
+  // --- ROW ---
+  if (line.includes("RowNozzleLayoutConfiguration")) {
+    const m = line.match(/primaryNozzle='([A-H]\d{1,2})'/);
+    let start_row = null, end_row = null, start_col = 1, end_col = 12;
+    
+    if (m) {
+      const [row] = getRowCol(m[1]);
+      start_row = end_row = row;
+    }
+
+    return {"action": "layout",
+      pos,
+      "layout":{
+        start_row, 
+        end_row, 
+        start_col, 
+        end_col,
+        primary_row: primary_row !== null ? primary_row : start_row,
+        primary_col: primary_col !== null ? primary_col : start_col}
+    };
+  }
+
+  // --- SINGLE ---
+  if (line.includes("SingleNozzleLayoutConfiguration")) {
+    const m = line.match(/primaryNozzle='([A-H]\d{1,2})'/);
+    let start_row = null, end_row = null, start_col = null, end_col = null;
+    
+    if (m) {
+      const [r, c] = getRowCol(m[1]);
+      start_row = end_row = r;
+      start_col = end_col = c;
+    }
+
+    return {"action": "layout",
+      pos,
+      "layout":{
+        start_row, 
+        end_row, 
+        start_col, 
+        end_col,
+        primary_row: primary_row !== null ? primary_row : start_row,
+        primary_col: primary_col !== null ? primary_col : start_col}
+    };
+  }
+
+  // --- CUSTOM or fallback ---
+  const wells = (line.match(/[A-H]\d{1,2}/g) || []);
+  if (wells.length) {
+    const rowVals = wells.map(w => getRowCol(w)[0]).filter(r => r != null);
+    const colVals = wells.map(w => getRowCol(w)[1]).filter(c => c != null);
+    const result = {"action": "layout",
+      pos,
+      "layout":{
+        start_row: Math.min(...rowVals),
+        end_row: Math.max(...rowVals),
+        start_col: Math.min(...colVals),
+        end_col: Math.max(...colVals),
+        primary_row: primary_row !== null ? primary_row : Math.max(...rowVals),
+        primary_col: primary_col !== null ? primary_col : Math.max(...colVals)}
+    };
+    return result;
+  }
+
+  return {"action": "layout",
+    pos,
+    "layout":{
+        start_row: null, 
+        end_row: null, 
+        start_col: null, 
+        end_col: null,
+        primary_row: null,
+        primary_col: null}
+  };
+}
+
+
 function parseUserInput(inputText, labwaresDict) {
     let lines = inputText.trim().split("\n");
     let parsedSteps = [];
@@ -759,9 +924,10 @@ function parseUserInput(inputText, labwaresDict) {
 
     // Iterate over each line to match the different patterns
     parsedSteps.push({});
-    parsedSteps.push({});
-    parsedSteps.push({});
     lines.forEach(line => {
+        if (line.includes("Configuring")){
+            parsedSteps.push(parseNozzleLayout(line));
+        }
         for (let slot in labwaresDict) {
             const labware = labwaresDict[slot]["labware"];
             const type = labware.type;
@@ -774,15 +940,16 @@ function parseUserInput(inputText, labwaresDict) {
             let aspirationRegex = new RegExp(`Aspirating (\\d+\\.\\d+) uL from ([A-H]\\d+) of ${labwareName}.*? on slot ([A-H]?\\d+) `);
             let dispensingRegex = new RegExp(`Dispensing (\\d+\\.\\d+) uL (from|into) ([A-H]\\d+) of ${labwareName}.*? on slot ([A-H]?\\d+) `);
             let tipRackRegex = new RegExp(`(Picking up|Dropping) tip (from|into) ([A-H]\\d+) of ${labwareName}.*? on slot ([A-H]?\\d+) `);
-            let tipTrashRegex = new RegExp(`Dropping tip into ${labwareName}.*? on slot ([A-H]?\\d+) `);
+            let tipTrashRegex = new RegExp(`Dropping tip into Trash Bin on slot ([A-H]?\\d+) `);
             let tipChuteRegex = new RegExp(`Dropping tip into Waste Chute`);
             let otherMoveRegex = new RegExp(`Moving ${original_name} to (Waste Chute|off-deck)`);
-            let slotMoveRegex = new RegExp(`Moving ${original_name} to slot ([A-H]?\\d+)`);
+            let slotMoveRegex = new RegExp(`Moving ${original_name} .* (on|slot) ([A-H]?\\d+)`);
             let tempRegex = new RegExp(`Setting Target Temperature of ${module.name} to (\\d+(?:\\.\\d+)?)`);
             let shakerRegex = new RegExp(`Setting ${module.name} to Shake at (\\d+(?:\\.\\d+)?) RPM`);
             let deactivateRegex = new RegExp(`Deactivating (Heater|Shaker)`);
             let moduleLidRegex = new RegExp(`(Opening|Closing) ${module.name} lid`);
             let moveLidRegex = new RegExp("Moving lid from (.*?) to (.*?)(?: with gripper)?\\s*$","i");
+            let delayRegex = new RegExp(`Delaying for (.*)`);
 
             let pipetteRegex =  /\[?instrument:\s*(.+?)\s+on\s+(left|right)\s+mount\]?/i;
 
@@ -803,6 +970,7 @@ function parseUserInput(inputText, labwaresDict) {
             let shakerMatch = line.match(shakerRegex);
             let deactivateMatch = line.match(deactivateRegex);
             let moveLidMatch = line.match(moveLidRegex);
+            let delayMatch = line.match(delayRegex);
 
             if (tipRackMatch) {
                 let wellCoord = tipRackMatch[3];
@@ -891,7 +1059,7 @@ function parseUserInput(inputText, labwaresDict) {
                 parsedSteps.push({
                     labware: labwareName.toLowerCase(),
                     action: "move",
-                    newLocation: slotMoveMatch[1],
+                    newLocation: slotMoveMatch[2],
                     type,
                     name: labwareName
                 });
@@ -954,11 +1122,15 @@ function parseUserInput(inputText, labwaresDict) {
                     });
                 }
                 break;
+            } else if (delayMatch) {
+                parsedSteps.push({
+                    action: "delay",
+                    duration: delayMatch[1],
+                });
+                break;
             }
         }
     });
-    parsedSteps.push({});
-    parsedSteps.push({});
     parsedSteps.push({});
     return parsedSteps;
 }
@@ -971,6 +1143,7 @@ function parseWellCoord(coord) {
 }
 
 function calcStateColor(sourceVolume, sourceColor, destVolume, destColor) {
+    //console.log(sourceVolume, sourceColor, destVolume, destColor)
     // Case 1: Destination is empty → use source color
     if (destVolume == 0 || !destColor) {
         return sourceColor; // Could be "Water", HEX, or null
@@ -1007,10 +1180,12 @@ function calcStateColor(sourceVolume, sourceColor, destVolume, destColor) {
     const srcRgb = hexToRgb(sourceColor);
     const destRgb = hexToRgb(destColor);
     const totalVol = sourceVolume + destVolume;
-    const r = Math.round((srcRgb.r * sourceVolume + destRgb.r * destVolume) / totalVol);
-    const g = Math.round((srcRgb.g * sourceVolume + destRgb.g * destVolume) / totalVol);
-    const b = Math.round((srcRgb.b * sourceVolume + destRgb.b * destVolume) / totalVol);
-    return rgbToHex(r, g, b);
+    const r = Math.round((Math.round(srcRgb.r) * sourceVolume + Math.round(destRgb.r) * destVolume) / totalVol);
+    const g = Math.round((Math.round(srcRgb.g) * sourceVolume + Math.round(destRgb.g) * destVolume) / totalVol);
+    const b = Math.round((Math.round(srcRgb.b) * sourceVolume + Math.round(destRgb.b) * destVolume) / totalVol);
+    let mixtureHex = rgbToHex(r, g, b);
+    //console.log(sourceColor, sourceVolume, destColor, destVolume, mixtureHex, totalVol)
+    return mixtureHex;
 }
 
 function rgbaToHex(rgba) {
@@ -1070,7 +1245,8 @@ function hexToRgb(hex) {
 
 // Helper: RGB → HEX
 function rgbToHex(r, g, b) {
-    return `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`;
+    let newHex = `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`;
+    return newHex;
 }
 
 function renameKey(obj, oldSlot, newSlot, module=null) {
@@ -1090,299 +1266,252 @@ function renameKey(obj, oldSlot, newSlot, module=null) {
 function animateSteps() {
     if (currentStep < steps.length) {
         let step = steps[currentStep];
-        const labwareType = step.type;
+        let labwareType = step.type;
+        if (labwareType == "Reservoir"){labwareType = "reservoirs";}
+        else if (labwareType == "Well Plate"){labwareType = "wellplate";}
+        else if (labwareType == "Tube Rack"){labwareType = "tuberack";}
+        else if (labwareType == "Tip Rack"){labwareType = "tiprack";}
         let { slot, row, col, volume, pipette, pipettePos } = step;
         //console.log(row, pipette, pipettePos);
-        let start;
-        let end;
-        if (stateDict.pipettes.channels != stateDict.pipettes.active_channels){
-            start = row-pipette+1;
-            end = row+1;
-        } else{
-            start = row;
-            end = pipette+row;
-        }
+        let start_row;
+        let end_row;
+        let start_col;
+        let end_col;
+        if (step.action == "layout"){stateDict.pipettes[step.pos].layout = step.layout}
 
         // Check if the labware name contains relevant keywords       
-        if (labwareType == "Reservoir") {
-            if (step.action == "aspirate") {
-                if (animationDict.reservoirs[slot]) {
-                    if (pipette != 1 && labwaresDict[slot]["labware"].rows != 1) {
-                        // Loop through multi pipettes
-                        for (let r = start; r < end; r++) {
-                            stateDict.pipettes[pipettePos].color = calcStateColor(
-                                animationDict.reservoirs[slot][r][col], stateDict.reservoirs[slot][r][col],
-                                stateDict.pipettes[pipettePos].volume, stateDict.pipettes[pipettePos].color
-                            );
-                            stateDict.pipettes[pipettePos].volume += volume;
-                            animationDict.reservoirs[slot][r][col] -= volume;
-                        }
-                    } else {
-                        // Single-channel pipette (dispense into a single row)
-                        stateDict.pipettes[pipettePos].color = calcStateColor(
-                            animationDict.reservoirs[slot][row][col], stateDict.reservoirs[slot][row][col],
-                            stateDict.pipettes[pipettePos].volume, stateDict.pipettes[pipettePos].color
-                        );
-                        stateDict.pipettes[pipettePos].volume += volume*pipette;
-                        animationDict.reservoirs[slot][row][col] -= volume*pipette;
-                    }
-                }
-            } else if (step.action == "dispense") {
-                if (animationDict.reservoirs[slot]) {
-                    if (pipette != 1 && labwaresDict[slot]["labware"].rows != 1) {
-                        // Loop through multi pipettes
-                        for (let r = start; r < end; r++) {
-                            stateDict.reservoirs[slot][r][col] = calcStateColor(
-                                stateDict.pipettes[pipettePos].volume, stateDict.pipettes[pipettePos].color,
-                                animationDict.reservoirs[slot][r][col], stateDict.reservoirs[slot][r][col]
-                            );
-                            stateDict.pipettes[pipettePos].volume -= volume;
-                            animationDict.reservoirs[slot][r][col] += volume;
-                        }
-                    } else {
-                        // Single-channel pipette (dispense into a single row)
-                        stateDict.reservoirs[slot][row][col] = calcStateColor(
-                                stateDict.pipettes[pipettePos].volume, stateDict.pipettes[pipettePos].color,
-                                animationDict.reservoirs[slot][row][col], stateDict.reservoirs[slot][row][col]
-                        );
-                        stateDict.pipettes[pipettePos].volume -= volume*pipette;
-                        animationDict.reservoirs[slot][row][col] += volume*pipette;
-                    }
-                }
-            } else if (step.action == "move") {
-                //console.log(step);
-                for (slot in labwaresDict){
-                    if (!("movement_path" in labwaresDict[slot]["labware"])) continue;
-                    if (labwaresDict[slot]["labware"]["movement_path"].length > 1){
-                        if (labwaresDict[slot]["labware"].movement_path[labwaresDict[slot]["labware"].movement_pos+1] == step.newLocation){
-                            if (step.newLocation == "Waste Chute"){
-                                renameKey(animationDict.reservoirs, slot, "chute_"+step.newLocation);
-                                renameKey(stateDict.reservoirs, slot, "chute_"+step.newLocation);
-                                renameKey(labwaresDict, slot, "chute_"+step.newLocation, "labware");
-                                labwaresDict["chute_"+step.newLocation]["labware"]["movement_pos"] += 1;
-                                labwaresDict["D3"].labwares.push(step.name);
-                                
-                            } else if(step.newLocation == "off-deck"){
-                                renameKey(animationDict.reservoirs, slot, "off_deck_"+step.newLocation);
-                                renameKey(stateDict.reservoirs, slot, "off_deck_"+step.newLocation);
-                                renameKey(labwaresDict, slot, "off_deck_"+step.newLocation, "labware");
-                                labwaresDict["off_deck_"+step.newLocation]["labware"]["movement_pos"] += 1;
-                            }
-                            else{
-                                renameKey(animationDict.reservoirs, slot, step.newLocation);
-                                renameKey(stateDict.reservoirs, slot, step.newLocation);
-                                renameKey(labwaresDict, slot, step.newLocation, "labware");
-                                labwaresDict[step.newLocation]["labware"]["movement_pos"] += 1;
-                            }
+        if (step.action == "move") {
+            //console.log(step);
+            for (slot in labwaresDict){
+                if (!("movement_path" in labwaresDict[slot]["labware"])) continue;
+                if (labwaresDict[slot]["labware"]["movement_path"].length > 1){
+                    if (labwaresDict[slot]["labware"].movement_path[labwaresDict[slot]["labware"].movement_pos+1] == step.newLocation){
+                        
+                        if (step.newLocation == "Waste Chute"){
+                            renameKey(animationDict[labwareType], slot, "chute_"+step.newLocation);
+                            renameKey(stateDict[labwareType], slot, "chute_"+step.newLocation);
+                            renameKey(labwaresDict, slot, "chute_"+step.newLocation, "labware");
+                            labwaresDict["chute_"+step.newLocation]["labware"]["movement_pos"] += 1;
+                            labwaresDict["D3"].labwares.push(step.name);
                             
+                        } else if(step.newLocation == "off-deck"){
+                            renameKey(animationDict[labwareType], slot, "off_deck_"+step.newLocation);
+                            renameKey(stateDict[labwareType], slot, "off_deck_"+step.newLocation);
+                            renameKey(labwaresDict, slot, "off_deck_"+step.newLocation, "labware");
+                            labwaresDict["off_deck_"+step.newLocation]["labware"]["movement_pos"] += 1;
+                        }
+                        else{
+                            renameKey(animationDict[labwareType], slot, step.newLocation);
+                            renameKey(stateDict[labwareType], slot, step.newLocation);
+                            renameKey(labwaresDict, slot, step.newLocation, "labware");
+                            labwaresDict[step.newLocation]["labware"]["movement_pos"] += 1;
+                        }
+                        
+                    }
+                }
+            }
+        } else if (step.action == "aspirate") {
+            if (animationDict.reservoirs[slot] || animationDict.wellplate[slot] || animationDict.tuberack[slot]) {
+                //console.log(start_row, end_row, start_col, end_col); // 0, 8, 0, 1
+                //console.log(rowMultiplier, colMultiplier, step); // 8, 1
+                if (stateDict.pipettes[pipettePos].layout == null){
+                    let pipetteRows = stateDict.pipettes[pipettePos]["rows"];
+                    let pipetteCols = stateDict.pipettes[pipettePos]["cols"];
+
+                    let rowMultiplier = 1;
+                    if (animationDict[labwareType][slot].length == 1 && labwareType == "reservoirs"){
+                        rowMultiplier = pipetteRows;
+                    }
+                    let colMultiplier = 1;
+                    if (animationDict[labwareType][slot][0].length == 1  && labwareType == "reservoirs"){
+                        colMultiplier = pipetteCols;
+                    }
+
+                    start_row = row;
+                    end_row = pipetteRows + row;
+                    start_col = col;
+                    end_col = pipetteCols + col;
+
+                    //console.log("start_row, end_row, pipetteRows, start_col, end_col, pipetteCols");
+                    //console.log(start_row, end_row, pipetteRows, start_col, end_col, pipetteCols);
+
+                    for (let labwareR = start_row; labwareR < Math.min(end_row, labwaresDict[slot]["labware"]["rows"]); labwareR++){
+                        for (let labwareC = start_col; labwareC < Math.min(end_col, labwaresDict[slot]["labware"]["cols"]); labwareC++){
+                            for (let pipetteR = labwareR-start_row; pipetteR < labwareR-start_row+Math.min(rowMultiplier, stateDict.pipettes[pipettePos]["rows"]); pipetteR++){
+                                for (let pipetteC = labwareC-start_col; pipetteC < labwareC-start_col+Math.min(colMultiplier, stateDict.pipettes[pipettePos]["cols"]); pipetteC++){
+                                    stateDict.pipettes[pipettePos]["colors"][pipetteR][pipetteC] = calcStateColor(
+                                        volume, stateDict[labwareType][slot][labwareR][labwareC],
+                                        stateDict.pipettes[pipettePos]["volumes"][pipetteR][pipetteC], stateDict.pipettes[pipettePos]["colors"][pipetteR][pipetteC]
+                                    );
+                                    stateDict.pipettes[pipettePos]["volumes"][pipetteR][pipetteC] += volume;
+                                    animationDict[labwareType][slot][labwareR][labwareC] -= volume;
+                                }
+                            }
+                        }
+                    }
+
+                } else{
+                    let layout = stateDict.pipettes[pipettePos]["layout"];
+                    let pipetteRows = 1+Math.abs(layout.start_row - layout.end_row);
+                    let pipetteCols = 1+Math.abs(layout.start_col - layout.end_col);
+
+                    let rowMultiplier = 1;
+                    if (animationDict[labwareType][slot].length == 1 && labwareType == "reservoirs"){
+                        rowMultiplier = pipetteRows;
+                    //} else if (layout.primary_row == layout.end_row && layout.primary_col == layout.end_col){
+                    } else if (layout.primary_row == layout.end_row && layout.primary_col == layout.end_col && (row - pipetteRows +1 >= 0) && (col - pipetteCols +1 >= 0)){
+                        row -= pipetteRows-1;
+                    }
+                    let colMultiplier = 1;
+                    if (animationDict[labwareType][slot][0].length == 1  && labwareType == "reservoirs"){
+                        colMultiplier = pipetteCols;
+                    //} else if (layout.primary_row == layout.end_row && layout.primary_col == layout.end_col){
+                    } else if (layout.primary_row == layout.end_row && layout.primary_col == layout.end_col && (row - pipetteRows +1 >= 0) && (col - pipetteCols +1 >= 0)){
+                        col -= pipetteCols-1;
+                    }
+
+                    start_row = row;
+                    end_row = pipetteRows + row;
+                    start_col = col;
+                    end_col = pipetteCols + col;
+                    //console.log("start_row, end_row, pipetteRows, start_col, end_col, pipetteCols");
+                    //console.log(start_row, end_row, pipetteRows, start_col, end_col, pipetteCols);
+
+                    for (let labwareR = start_row; labwareR < Math.min(end_row, labwaresDict[slot]["labware"]["rows"]); labwareR++){
+                        for (let labwareC = start_col; labwareC < Math.min(end_col, labwaresDict[slot]["labware"]["cols"]); labwareC++){
+                            for (let pipetteR = labwareR-start_row; pipetteR < labwareR-start_row+Math.min(rowMultiplier, stateDict.pipettes[pipettePos]["rows"]); pipetteR++){
+                                for (let pipetteC = labwareC-start_col; pipetteC < labwareC-start_col+Math.min(colMultiplier, stateDict.pipettes[pipettePos]["cols"]); pipetteC++){
+                                    stateDict.pipettes[pipettePos]["colors"][pipetteR][pipetteC] = calcStateColor(
+                                        volume, stateDict[labwareType][slot][labwareR][labwareC],
+                                        stateDict.pipettes[pipettePos]["volumes"][pipetteR][pipetteC], stateDict.pipettes[pipettePos]["colors"][pipetteR][pipetteC]
+                                    );
+                                    stateDict.pipettes[pipettePos]["volumes"][pipetteR][pipetteC] += volume;
+                                    animationDict[labwareType][slot][labwareR][labwareC] -= volume;
+                                }
+                            }
+                        }
+                    }
+
+
+                }
+            }
+        } else if (step.action == "dispense") {            
+            if (animationDict.reservoirs[slot] || animationDict.wellplate[slot] || animationDict.tuberack[slot]) {
+                //console.log(start_row, end_row, start_col, end_col); // 0, 8, 0, 1
+                //console.log(rowMultiplier, colMultiplier, step); // 8, 1
+                if (stateDict.pipettes[pipettePos].layout == null){
+                    let pipetteRows = stateDict.pipettes[pipettePos]["rows"];
+                    let pipetteCols = stateDict.pipettes[pipettePos]["cols"];
+
+                    let rowMultiplier = 1;
+                    if (animationDict[labwareType][slot].length == 1 && labwareType == "reservoirs"){
+                        rowMultiplier = pipetteRows;
+                    }
+                    let colMultiplier = 1;
+                    if (animationDict[labwareType][slot][0].length == 1  && labwareType == "reservoirs"){
+                        colMultiplier = pipetteCols;
+                    }
+
+                    start_row = row;
+                    end_row = pipetteRows + row;
+                    start_col = col;
+                    end_col = pipetteCols + col;
+
+                    //console.log("start_row, end_row, pipetteRows, start_col, end_col, pipetteCols");
+                    //console.log(start_row, end_row, pipetteRows, start_col, end_col, pipetteCols);
+                    
+                    for (let labwareR = start_row; labwareR < Math.min(end_row, labwaresDict[slot]["labware"]["rows"]); labwareR++){
+                        for (let labwareC = start_col; labwareC < Math.min(end_col, labwaresDict[slot]["labware"]["cols"]); labwareC++){
+                            for (let pipetteR = labwareR-start_row; pipetteR < labwareR-start_row+Math.min(rowMultiplier, stateDict.pipettes[pipettePos]["rows"]); pipetteR++){
+                                for (let pipetteC = labwareC-start_col; pipetteC < labwareC-start_col+Math.min(colMultiplier, stateDict.pipettes[pipettePos]["cols"]); pipetteC++){
+                                    stateDict[labwareType][slot][labwareR][labwareC] = calcStateColor(
+                                            stateDict.pipettes[pipettePos]["volumes"][pipetteR][pipetteC], stateDict.pipettes[pipettePos]["colors"][pipetteR][pipetteC],
+                                            volume, stateDict[labwareType][slot][labwareR][labwareC]
+                                    );
+                                    stateDict.pipettes[pipettePos]["volumes"][pipetteR][pipetteC] -= volume;
+                                    animationDict[labwareType][slot][labwareR][labwareC] += volume;
+                                }
+                            }
+                        }
+                    }
+                    
+                } else{
+                    let layout = stateDict.pipettes[pipettePos]["layout"];
+                    let pipetteRows = 1+Math.abs(layout.start_row - layout.end_row);
+                    let pipetteCols = 1+Math.abs(layout.start_col - layout.end_col);
+
+                    let rowMultiplier = 1;
+                    if (animationDict[labwareType][slot].length == 1 && labwareType == "reservoirs"){
+                        rowMultiplier = pipetteRows;
+                    //} else if (layout.primary_row == layout.end_row && layout.primary_col == layout.end_col){
+                    } else if (layout.primary_row == layout.end_row && layout.primary_col == layout.end_col && (row - pipetteRows +1 >= 0) && (col - pipetteCols +1 >= 0)){
+                        row -= pipetteRows-1;
+                    }
+                    let colMultiplier = 1;
+                    if (animationDict[labwareType][slot][0].length == 1  && labwareType == "reservoirs"){
+                        colMultiplier = pipetteCols;
+                    //} else if (layout.primary_row == layout.end_row && layout.primary_col == layout.end_col){
+                    } else if (layout.primary_row == layout.end_row && layout.primary_col == layout.end_col && (row - pipetteRows +1 >= 0) && (col - pipetteCols +1 >= 0)){
+                        col -= pipetteCols-1;
+                    }
+
+                    start_row = row;
+                    end_row = pipetteRows + row;
+                    start_col = col;
+                    end_col = pipetteCols + col;
+
+                    //console.log("start_row, end_row, pipetteRows, start_col, end_col, pipetteCols");
+                    //console.log(start_row, end_row, pipetteRows, start_col, end_col, pipetteCols);
+
+                    for (let labwareR = start_row; labwareR < Math.min(end_row, labwaresDict[slot]["labware"]["rows"]); labwareR++){
+                        for (let labwareC = start_col; labwareC < Math.min(end_col, labwaresDict[slot]["labware"]["cols"]); labwareC++){
+                            for (let pipetteR = labwareR-start_row; pipetteR < labwareR-start_row+Math.min(rowMultiplier, stateDict.pipettes[pipettePos]["rows"]); pipetteR++){
+                                for (let pipetteC = labwareC-start_col; pipetteC < labwareC-start_col+Math.min(colMultiplier, stateDict.pipettes[pipettePos]["cols"]); pipetteC++){
+                                    stateDict[labwareType][slot][labwareR][labwareC] = calcStateColor(
+                                            stateDict.pipettes[pipettePos]["volumes"][pipetteR][pipetteC], stateDict.pipettes[pipettePos]["colors"][pipetteR][pipetteC],
+                                            volume, stateDict[labwareType][slot][labwareR][labwareC]
+                                    );
+                                    stateDict.pipettes[pipettePos]["volumes"][pipetteR][pipetteC] -= volume;
+                                    animationDict[labwareType][slot][labwareR][labwareC] += volume;
+                                }
+                            }
                         }
                     }
                 }
             }
-        } else if (labwareType == "Well Plate") {
-            if (step.action == "aspirate") {
-                if (animationDict.wellplate[slot]) {
-                    if (pipette != 1 && labwaresDict[slot]["labware"].rows != 1) {
-                        // Loop through multi pipettes
-                        for (let r = start; r < end; r++) {
-                            stateDict.pipettes[pipettePos].color = calcStateColor(
-                                animationDict.wellplate[slot][r][col], stateDict.wellplate[slot][r][col],
-                                stateDict.pipettes[pipettePos].volume, stateDict.pipettes[pipettePos].color
-                            );
-                            stateDict.pipettes[pipettePos].volume += volume;
-                            animationDict.wellplate[slot][r][col] = Math.max(0, animationDict.wellplate[slot][r][col] - volume);
-                        }
-                    } else {
-                        // Single-channel pipette (aspirate from a single row)
-                        stateDict.pipettes[pipettePos].color = calcStateColor(
-                            animationDict.wellplate[slot][row][col], stateDict.wellplate[slot][row][col],
-                            stateDict.pipettes[pipettePos].volume, stateDict.pipettes[pipettePos].color
-                        );
-                        stateDict.pipettes[pipettePos].volume += volume*pipette;
-                        animationDict.wellplate[slot][row][col] = Math.max(0, animationDict.wellplate[slot][row][col] - volume);
-                    }
-                }
-            } else if (step.action == "dispense") {
-                if (animationDict.wellplate[slot]) {
-                    if (pipette != 1 && labwaresDict[slot]["labware"].rows != 1) {
-                        // Loop through multi pipettes
-                        for (let r = start; r < end; r++) {
-                            stateDict.wellplate[slot][r][col] = calcStateColor(
-                                stateDict.pipettes[pipettePos].volume, stateDict.pipettes[pipettePos].color,
-                                animationDict.wellplate[slot][r][col], stateDict.wellplate[slot][r][col]
-                            );
-                            stateDict.pipettes[pipettePos].volume -= volume;
-                            animationDict.wellplate[slot][r][col] = Math.max(0, animationDict.wellplate[slot][r][col] + volume);
-                        }
-                    } else {
-                        // Single-channel pipette (dispense into a single row)
-                        stateDict.wellplate[slot][row][col] = calcStateColor(
-                                stateDict.pipettes[pipettePos].volume, stateDict.pipettes[pipettePos].color,
-                                animationDict.wellplate[slot][row][col], stateDict.wellplate[slot][row][col]
-                        );
-                        stateDict.pipettes[pipettePos].volume -= volume*pipette;
-                        animationDict.wellplate[slot][row][col] = Math.max(0, animationDict.wellplate[slot][row][col] + volume);
-                    }
-                }
-            } else if (step.action == "move") {
-                //console.log(step);
-                for (slot in labwaresDict){
-                    if (!("movement_path" in labwaresDict[slot]["labware"])) continue;
-                    if (labwaresDict[slot]["labware"]["movement_path"].length > 1){
-                        if (labwaresDict[slot]["labware"].movement_path[labwaresDict[slot]["labware"].movement_pos+1] == step.newLocation){
-                            
-                            if (step.newLocation == "Waste Chute"){
-                                renameKey(animationDict.wellplate, slot, "chute_"+step.newLocation);
-                                renameKey(stateDict.wellplate, slot, "chute_"+step.newLocation);
-                                renameKey(labwaresDict, slot, "chute_"+step.newLocation, "labware");
-                                labwaresDict["chute_"+step.newLocation]["labware"]["movement_pos"] += 1;
-                                labwaresDict["D3"].labwares.push(step.name);
-                                
-                            } else if(step.newLocation == "off-deck"){
-                                renameKey(animationDict.reservoirs, slot, "off_deck_"+step.newLocation);
-                                renameKey(stateDict.reservoirs, slot, "off_deck_"+step.newLocation);
-                                renameKey(labwaresDict, slot, "off_deck_"+step.newLocation, "labware");
-                                labwaresDict["off_deck_"+step.newLocation]["labware"]["movement_pos"] += 1;
+        } else if (labwareType == "tiprack") {
+            if (animationDict.tiprack[slot]) {
+                if (stateDict.pipettes[pipettePos].layout == null){
+                    let pipetteRows = stateDict.pipettes[pipettePos]["rows"];
+                    let pipetteCols = stateDict.pipettes[pipettePos]["cols"];
+                    for (let r = row; r < row+pipetteRows; r++){
+                        for (let c = col; c < col+pipetteCols; c++){
+                            if (step.action == "Picking up") {
+                                animationDict.tiprack[slot][r][c] = 0;
                             }
-                            else{
-                                renameKey(animationDict.wellplate, slot, step.newLocation);
-                                renameKey(stateDict.wellplate, slot, step.newLocation);
-                                renameKey(labwaresDict, slot, step.newLocation, "labware");
-                                labwaresDict[step.newLocation]["labware"]["movement_pos"] += 1;
+                            else if (step.action == "Dropping") {
+                                animationDict.tiprack[slot][r][c] = 1;
                             }
-                            
                         }
                     }
-                }
-            }
-        } else if (labwareType == "Tube Rack") {
-            if (step.action == "aspirate") {
-                if (animationDict.tuberack[slot]) {
-                    if (pipette != 1 && labwaresDict[slot]["labware"].rows != 1) {
-                        // Loop through multi pipettes
-                        for (let r = start; r < end; r++) {
-                            stateDict.tuberack[slot][r][col] = calcStateColor(
-                                stateDict.pipettes[pipettePos].volume, stateDict.pipettes[pipettePos].color,
-                                animationDict.tuberack[slot][r][col], stateDict.tuberack[slot][r][col]
-                            );
-                            stateDict.pipettes[pipettePos].volume -= volume;
-                            animationDict.tuberack[slot][r][col] = Math.max(0, animationDict.tuberack[slot][r][col] - volume);
-                        }
-                    } else {
-                        // Single-channel pipette (aspirate from a single row)
-                        stateDict.pipettes[pipettePos].color = calcStateColor(
-                            animationDict.tuberack[slot][row][col], stateDict.tuberack[slot][row][col],
-                            stateDict.pipettes[pipettePos].volume, stateDict.pipettes[pipettePos].color
-                        );
-                        stateDict.pipettes[pipettePos].volume += volume*pipette;
-                        animationDict.tuberack[slot][row][col] = Math.max(0, animationDict.tuberack[slot][row][col] - volume);
+                } else{                    
+                    let layout = stateDict.pipettes[pipettePos]["layout"];
+                    let pipetteRows = 1+Math.abs(layout.start_row - layout.end_row);
+                    let pipetteCols = 1+Math.abs(layout.start_col - layout.end_col);
+
+                    if (layout.primary_row == layout.end_row && layout.primary_col == layout.end_col && (row - pipetteRows +1 >= 0) && (col - pipetteCols +1 >= 0)){
+                        row -= pipetteRows-1;
+                        col -= pipetteCols-1;
                     }
-                }
-            } else if (step.action == "dispense") {
-                if (animationDict.tuberack[slot]) {
-                    if (pipette != 1 && labwaresDict[slot]["labware"].rows != 1) {
-                        // Loop through multi pipettes
-                        for (let r = start; r < end; r++) {
-                            stateDict.tuberack[slot][r][col] = calcStateColor(
-                                stateDict.pipettes[pipettePos].volume, stateDict.pipettes[pipettePos].color,
-                                animationDict.tuberack[slot][r][col], stateDict.tuberack[slot][r][col]
-                            );
-                            stateDict.pipettes[pipettePos].volume -= volume;
-                            animationDict.tuberack[slot][r][col] = Math.max(0, animationDict.tuberack[slot][r][col] + volume);
-                        }
-                    } else {
-                        // Single-channel pipette (dispense into a single row)
-                        stateDict.tuberack[slot][row][col] = calcStateColor(
-                                stateDict.pipettes[pipettePos].volume, stateDict.pipettes[pipettePos].color,
-                                animationDict.tuberack[slot][row][col], stateDict.tuberack[slot][row][col]
-                        );
-                        stateDict.pipettes[pipettePos].volume -= volume*pipette;
-                        animationDict.tuberack[slot][row][col] = Math.max(0, animationDict.tuberack[slot][row][col] + volume);
-                    }
-                }
-            } else if (step.action == "move") {
-                //console.log(step);
-                for (slot in labwaresDict){
-                    if (!("movement_path" in labwaresDict[slot]["labware"])) continue;
-                    if (labwaresDict[slot]["labware"]["movement_path"].length > 1){
-                        if (labwaresDict[slot]["labware"].movement_path[labwaresDict[slot]["labware"].movement_pos+1] == step.newLocation){
-                            
-                            if (step.newLocation == "Waste Chute"){
-                                renameKey(animationDict.tuberack, slot, "chute_"+step.newLocation);
-                                renameKey(stateDict.tuberack, slot, "chute_"+step.newLocation);
-                                renameKey(labwaresDict, slot, "chute_"+step.newLocation, "labware");
-                                labwaresDict["chute_"+step.newLocation]["labware"]["movement_pos"] += 1;
-                                labwaresDict["D3"].labwares.push(step.name);
-                                
-                            } else if(step.newLocation == "off-deck"){
-                                renameKey(animationDict.reservoirs, slot, "off_deck_"+step.newLocation);
-                                renameKey(stateDict.reservoirs, slot, "off_deck_"+step.newLocation);
-                                renameKey(labwaresDict, slot, "off_deck_"+step.newLocation, "labware");
-                                labwaresDict["off_deck_"+step.newLocation]["labware"]["movement_pos"] += 1;
+
+                    for (let r = row; r < row+pipetteRows; r++){
+                        for (let c = col; c < col+pipetteCols; c++){
+                            if (step.action == "Picking up") {
+                                animationDict.tiprack[slot][r][c] = 0;
                             }
-                            else{
-                                renameKey(animationDict.tuberack, slot, step.newLocation);
-                                renameKey(stateDict.tuberack, slot, step.newLocation);
-                                renameKey(labwaresDict, slot, step.newLocation, "labware");
-                                labwaresDict[step.newLocation]["labware"]["movement_pos"] += 1;
+                            else if (step.action == "Dropping") {
+                                animationDict.tiprack[slot][r][c] = 1;
                             }
-                            
-                        }
-                    }
-                }
-            }
-        } else if (labwareType == "Tip Rack") {
-            if (step.action == "Picking up") {
-                if (animationDict.tiprack[slot]) {
-                    if (pipette != 1 && labwaresDict[slot]["labware"].rows != 1) {
-                        // Loop through multi pipettes
-                        for (let r = start; r < end; r++) {
-                            animationDict.tiprack[slot][r][col] = 0; // Mark all tips in column as used
-                        }
-                    } else {
-                        // Single-channel pipette (pickup from a single row)
-                        animationDict.tiprack[slot][row][col] = 0; // Mark tip as used
-                    }
-                }
-            }else if (step.action == "Dropping") {
-                if (animationDict.tiprack[slot]) {
-                    if (pipette != 1 && labwaresDict[slot]["labware"].rows != 1) {
-                        // Loop through multi pipettes
-                        for (let r = start; r < end; r++) {
-                            animationDict.tiprack[slot][r][col] = 1; // Mark all tips in column as used
-                        }
-                    } else {
-                        // Single-channel pipette (pickup from a single row)
-                        animationDict.tiprack[slot][row][col] = 1; // Mark tip as used
-                    }
-                }
-            } else if (step.action == "move") {
-                //console.log(step);
-                for (slot in labwaresDict){
-                    if (!("movement_path" in labwaresDict[slot]["labware"])) continue;
-                    if (labwaresDict[slot]["labware"]["movement_path"].length > 1){
-                        if (labwaresDict[slot]["labware"].movement_path[labwaresDict[slot]["labware"].movement_pos+1] == step.newLocation){
-                            
-                            if (step.newLocation == "Waste Chute"){
-                                renameKey(animationDict.tiprack, slot, "chute_"+step.newLocation);
-                                renameKey(stateDict.tiprack, slot, "chute_"+step.newLocation);
-                                renameKey(labwaresDict, slot, "chute_"+step.newLocation, "labware");
-                                labwaresDict["chute_"+step.newLocation]["labware"]["movement_pos"] += 1;
-                                labwaresDict["D3"].labwares.push(step.name);
-                                
-                            } else if(step.newLocation == "off-deck"){
-                                renameKey(animationDict.reservoirs, slot, "off_deck_"+step.newLocation);
-                                renameKey(stateDict.reservoirs, slot, "off_deck_"+step.newLocation);
-                                renameKey(labwaresDict, slot, "off_deck_"+step.newLocation, "labware");
-                                labwaresDict["off_deck_"+step.newLocation]["labware"]["movement_pos"] += 1;
-                            }
-                            else{
-                                renameKey(animationDict.tiprack, slot, step.newLocation);
-                                renameKey(stateDict.tiprack, slot, step.newLocation);
-                                renameKey(labwaresDict, slot, step.newLocation, "labware");
-                                labwaresDict[step.newLocation]["labware"]["movement_pos"] += 1;
-                            }
-                            
                         }
                     }
                 }
@@ -1429,8 +1558,9 @@ function animateSteps() {
                     labwaresDict[slot]["lid_stack"]["quantity"] += 1;
                 }
             }
+        } else if (step.action == "delay"){
+            alert(`Delaying for ${step.duration}`);
         }
-        //console.log(stateDict);
 
         currentStep++;
         setTimeout(animateSteps, playSpeed);
@@ -1471,7 +1601,6 @@ function verifySlot(slot){
             if (labwaresDict[loopSlot].movement_path.length > 1){
                 if(slot in labwaresDict[loopSlot].movement_path){
                     slot = loopSlot;
-                    console.log(slot);
                 }
             }
         }

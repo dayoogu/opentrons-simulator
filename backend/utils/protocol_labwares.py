@@ -371,6 +371,10 @@ def analyze_protocol(protocol_path, labware_path="backend/assets/labware_info.js
                 for v in labware_movements.values():
                     if v[0] == slot:
                         found = True
+                        for index, value in enumerate(v):
+                            match = re.search(r" on (\S+)", value)
+                            if match:
+                                v[index] = match.group(1)
                         labware_dict[slot]["labware"]["movement_path"] = v
                         break
             if not found:
@@ -397,6 +401,26 @@ def analyze_protocol(protocol_path, labware_path="backend/assets/labware_info.js
     # Create separate dictionary for pipettes
     pipettes_dict = {}
     for mount, pipette in ctx.loaded_instruments.items():
+        if pipette.channels == 1:
+            volumes = [[0]]
+            colors = [[None]]
+            rows = 1
+            cols = 1
+        elif pipette.channels == 8:
+            volumes = [[0] for _ in range(8)]
+            colors = [[None] for _ in range(8)]
+            rows = 8
+            cols = 1
+        elif pipette.channels == 96:
+            volumes = [[0 for _ in range(12)] for _ in range(8)]
+            colors = [[None for _ in range(12)] for _ in range(8)]
+            rows = 8
+            cols = 12
+        else:
+            # Default in case of unexpected pipette type
+            volumes = []
+            colors = []
+
         pipettes_dict[mount] = {
             'name': pipette.name,
             'model': pipette.model,
@@ -405,8 +429,14 @@ def analyze_protocol(protocol_path, labware_path="backend/assets/labware_info.js
             'channels': pipette.channels,
             'active_channels': pipette.active_channels,
             'volume': 0,
-            'color': None
+            'color': None,
+            'volumes': volumes,
+            'colors': colors,
+            'rows': rows,
+            'cols': cols,
+            'layout': None
         }
+
 
     # Print pipette information
     #print("\nPipette Information:")
