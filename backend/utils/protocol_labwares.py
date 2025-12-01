@@ -26,8 +26,17 @@ def analyze_protocol(protocol_path, labware_path="backend/assets/labware_info.js
     requirements_path = os.path.join("backend", "assets", "requirements.json")
     with open(requirements_path, "r", encoding="utf-8") as f:
         requirements_text = f.read()
-    # or if you want it parsed:
     requirements_data = json.loads(requirements_text)
+
+    # === Load custom labware types mapping ===
+    custom_labware_path = os.path.join("backend", "assets", "loaded_custom_labware.json")
+    custom_labware_dict = {}
+    if os.path.exists(custom_labware_path):
+        try:
+            with open(custom_labware_path, 'r', encoding='utf-8') as f:
+                custom_labware_dict = json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            print(f"Warning: could not load custom labware mapping: {e}")
 
     ctx = get_protocol_api(requirements_data['apiLevel'], robot_type=requirements_data['robotType'])
 
@@ -354,17 +363,27 @@ def analyze_protocol(protocol_path, labware_path="backend/assets/labware_info.js
             labware_dict[slot]["labware"]["rows"] = instance["rows"]
             labware_dict[slot]["labware"]["cols"] = instance["cols"]
             labware_dict[slot]["labware"]["lid"] = None
-            #print(instance["name"])
-            if not instance["is_tiprack"]:
-                if "Tube Rack" in instance["name"]:
-                    labware_dict[slot]["labware"]["type"] = 'Tube Rack'
-                elif "Reservoir" in instance["name"]:
-                    labware_dict[slot]["labware"]["type"] = 'Reservoir'
-                elif "Plate" in instance["name"]:
-                    labware_dict[slot]["labware"]["type"] = 'Well Plate'
+            
+            # === Determine labware type from loaded_custom_labware.json or fallback to name ===
+            load_name = instance["load_name"]
+            type_str = ""
+            
+            if load_name in custom_labware_dict:
+                # Custom labware: use type from loaded_custom_labware.json
+                type_str = custom_labware_dict[load_name].get("type", "")
             else:
-                labware_dict[slot]["labware"]["type"] = 'Tip Rack'
-
+                # Built-in labware: infer from name
+                if not instance["is_tiprack"]:
+                    if "Tube Rack" in instance["name"]:
+                        type_str = 'Tube Rack'
+                    elif "Reservoir" in instance["name"]:
+                        type_str = 'Reservoir'
+                    elif "Plate" in instance["name"]:
+                        type_str = 'Well Plate'
+                else:
+                    type_str = 'Tip Rack'
+            
+            labware_dict[slot]["labware"]["type"] = type_str
             
             found = False
             if "movement_path" not in labware_dict[slot]:
