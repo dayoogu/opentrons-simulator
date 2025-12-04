@@ -1,4 +1,5 @@
 import importlib.util
+import inspect
 import sys
 import json
 from opentrons.simulate import get_protocol_api
@@ -6,6 +7,7 @@ from opentrons import protocol_api
 import os
 import re
 from pprint import pprint
+import uuid
 
 flexKey = {
     "1": "D1",
@@ -21,6 +23,25 @@ flexKey = {
     "11": "A2",
     "12": "A3",
 }
+
+global caller_locals
+caller_locals = {}
+
+def assign_user_defined(instance_list):
+    global caller_locals
+
+    for instance in instance_list:
+        if "obj" in dict.keys(instance):
+            obj = instance["obj"]
+            user_defined_name = None
+
+            # Find which global variable points to this object
+            for var_name, var_value in caller_locals.items():
+                if var_value is obj:
+                    user_defined_name = var_name
+                    break
+
+            instance["user_defined"] = user_defined_name
 
 def analyze_protocol(protocol_path, labware_path="backend/assets/labware_info.json", pipette_path="backend/assets/pipette_info.json"):
     requirements_path = os.path.join("backend", "assets", "requirements.json")
@@ -130,7 +151,7 @@ def analyze_protocol(protocol_path, labware_path="backend/assets/labware_info.js
             labware_movements[labware].append("Waste Chute")
         elif ("OFF_DECK" in str(new_location) or new_location == protocol_api.OFF_DECK):
             discarded_labware.add(labware)
-            labware_movements[labware].append("off-deck")
+            labware_movements[labware].append("OFF_DECK_"+str(uuid.uuid4())[:4])
 
         return result
 
@@ -144,9 +165,11 @@ def analyze_protocol(protocol_path, labware_path="backend/assets/labware_info.js
         return list(reversed(chain))  # top-level parent first
 
     def tracking_load_generic(original_load_fn, instance_list, obj_type):
+        global caller_locals
         """Create a wrapper for any load function (labware, adapter, module, lid_stack)."""
 
         def wrapper(*args, **kwargs):
+            global caller_locals
             # --- Handle variable argument names (load_name, module_name, etc.) ---
             load_name = None
             location = None
@@ -162,6 +185,8 @@ def analyze_protocol(protocol_path, labware_path="backend/assets/labware_info.js
             # 2️⃣ Identify the location
             if "location" in kwargs:
                 location = kwargs["location"]
+                if "OFF_DECK" in str(location):
+                    location = "OFF_DECK_"+str(uuid.uuid4())[:4]
             elif len(args) > 1:
                 location = args[1]
 
@@ -230,9 +255,10 @@ def analyze_protocol(protocol_path, labware_path="backend/assets/labware_info.js
                 "location": loaded_on,
                 "loaded_on": loaded_on,
                 "parent_chain": parent_chain,
-                "type": obj_type
+                "type": obj_type,
             }
             instance_info.update(geometry)
+            caller_locals = inspect.currentframe().f_back.f_locals
 
             # Lid stack extras
             if obj_type == "Lid Stack":
@@ -320,6 +346,9 @@ def analyze_protocol(protocol_path, labware_path="backend/assets/labware_info.js
     protocol_module.run(ctx)
 
     all_instances = chute_trash_instances + module_instances + adapter_instances + labware_instances + lid_stack_instances
+    assign_user_defined(all_instances)
+    pprint(all_instances)
+
 
     for instance in all_instances:
         slot = instance["location"]
@@ -330,7 +359,10 @@ def analyze_protocol(protocol_path, labware_path="backend/assets/labware_info.js
             "lid_stack": {}
         }
 
+    print(labware_dict)
+
     # Link movement paths to corresponding slots
+    #print(labware_movements.items())
     for labware_obj, movement_path in labware_movements.items():
         if movement_path[-1] == "Waste Chute" or movement_path[-1] == "Trash Bin":
             movement_path.pop(-2)
@@ -370,7 +402,10 @@ def analyze_protocol(protocol_path, labware_path="backend/assets/labware_info.js
             
             if load_name in custom_labware_dict:
                 # Custom labware: use type from loaded_custom_labware.json
-                type_str = custom_labware_dict[load_name].get("type", "")
+                try:
+                    type_str = custom_labware_dict[load_name].get("type", "")
+                except:
+                    pass
             else:
                 # Built-in labware: infer from name
                 if not instance["is_tiprack"]:
@@ -383,8 +418,17 @@ def analyze_protocol(protocol_path, labware_path="backend/assets/labware_info.js
                 else:
                     type_str = 'Tip Rack'
             
-            labware_dict[slot]["labware"]["type"] = type_str
-            
+            labware_dict[slot]["labware"]["type"] = type_str            
+            labware_dict[slot]["labware"]["original_load_name"] = instance["load_name"]
+            labware_dict[slot]["labware"]["user_defined"] = instance["user_defined"]
+            labware_dict[slot]["labware"]["movement_pos"] = 0
+            labware_dict[slot]["labware"]["name"] = instance["name"]
+            labware_dict[slot]["labware"]["volume"] = instance["volume"]
+            labware_dict[slot]["labware"]["diameter"] = instance["diameter"]
+            labware_dict[slot]["labware"]["width"] = instance["width"]
+            labware_dict[slot]["labware"]["length"] = instance["length"]
+            labware_dict[slot]["labware"]["spacing"] = {'x': instance["spacing_x"], 'y': instance["spacing_y"]}
+
             found = False
             if "movement_path" not in labware_dict[slot]:
                 for v in labware_movements.values():
@@ -397,16 +441,14 @@ def analyze_protocol(protocol_path, labware_path="backend/assets/labware_info.js
                         labware_dict[slot]["labware"]["movement_path"] = v
                         break
             if not found:
-                labware_dict[slot]["labware"]["movement_path"] = [slot]
-            
-            labware_dict[slot]["labware"]["original_load_name"] = instance["load_name"]
-            labware_dict[slot]["labware"]["movement_pos"] = 0
-            labware_dict[slot]["labware"]["name"] = instance["name"]
-            labware_dict[slot]["labware"]["volume"] = instance["volume"]
-            labware_dict[slot]["labware"]["diameter"] = instance["diameter"]
-            labware_dict[slot]["labware"]["width"] = instance["width"]
-            labware_dict[slot]["labware"]["length"] = instance["length"]
-            labware_dict[slot]["labware"]["spacing"] = {'x': instance["spacing_x"], 'y': instance["spacing_y"]}
+                if "OFF_DECK" in slot:
+                    for labware_obj, movement_path in labware_movements.items():
+                        if instance["obj"] == labware_obj:
+                            movement_path[0] = slot
+                            labware_dict[slot]["labware"]["movement_path"] = movement_path
+                    print(slot, labware_dict[slot])
+                else:
+                    labware_dict[slot]["labware"]["movement_path"] = [slot]
 
         if instance['type'] == "Lid Stack":
             labware_dict[slot]["lid_stack"]["quantity"] = instance["quantity"]

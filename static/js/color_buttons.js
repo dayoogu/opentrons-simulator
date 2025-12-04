@@ -1,12 +1,18 @@
 async function colorButtons(animationDict, labwaresDict) {
     const container = document.getElementById('color-selectors');
+    container.style.visibility = "visible";
+    // Run function whenever ANY input changes
+    container.addEventListener("input", () => {
+        saveLayout();  // <--- replace with whatever you want to run
+    });
+
     const animation_data = animationDict;
 
     // Store existing values (if any)
     const existingColors = {};
     const existingCheckboxes = {
         empty: {},
-        water: {}
+        diluent: {}
     };
     
     // Get previous states
@@ -20,19 +26,19 @@ async function colorButtons(animationDict, labwaresDict) {
         
         // Store checkbox states
         const emptyCheckboxes = section.querySelectorAll('input[type="checkbox"][data-type$="1"]');
-        const waterCheckboxes = section.querySelectorAll('input[type="checkbox"][data-type$="2"]');
+        const diluentCheckboxes = section.querySelectorAll('input[type="checkbox"][data-type$="2"]');
         
         if (emptyCheckboxes.length) {
             existingCheckboxes.empty[title] = Array.from(emptyCheckboxes).map(cb => cb.checked);
         }
-        if (waterCheckboxes.length) {
-            existingCheckboxes.water[title] = Array.from(waterCheckboxes).map(cb => cb.checked);
+        if (diluentCheckboxes.length) {
+            existingCheckboxes.diluent[title] = Array.from(diluentCheckboxes).map(cb => cb.checked);
         }
     });
 
     // Clear container for fresh rendering
     container.innerHTML = '';
-    container.style.display = 'flex';
+    //container.style.display = 'flex';
     container.style.gap = '30px';
 
     // Inputs stores - all using 2D structure
@@ -43,13 +49,15 @@ async function colorButtons(animationDict, labwaresDict) {
         tuberack: {}
     };
     
-    const waterInputsStore = {
+    const diluentInputsStore = {
         reservoirs: {},
+        wellplate: {},
         tuberack: {}
     };
     
     const emptyInputsStore = {
         reservoirs: {},
+        wellplate: {},
         tuberack: {}
     };
 
@@ -64,7 +72,7 @@ async function colorButtons(animationDict, labwaresDict) {
         isMouseDown = true;
         if (e.target.type === 'checkbox') {
             currentDragTickState = e.target.checked;
-            currentDragTickType = e.target.dataset.type.includes('1') ? 'empty' : 'water';
+            currentDragTickType = e.target.dataset.type.includes('1') ? 'empty' : 'diluent';
         }
     });
 
@@ -109,13 +117,19 @@ async function colorButtons(animationDict, labwaresDict) {
     };
 
     // Helper function to create checkboxes with drag functionality and restore state
-    const createCheckbox = (slot, identifier, type, labwareName) => {
+    const createCheckbox = (slot, identifier, type, labwareName, autoTickEmpty = false) => {
         const tickBox = document.createElement('input');
         tickBox.type = 'checkbox';
         tickBox.style.width = '20px';
         tickBox.style.height = '20px';
         tickBox.style.margin = '5px';
         tickBox.style.cursor = 'pointer';
+
+        // Auto-tick all EMPTY checkboxes if true
+        if (autoTickEmpty && type.includes('1')) {
+            tickBox.checked = true;
+        }
+
         
         // Set dataset attributes
         tickBox.dataset.slot = slot;
@@ -131,11 +145,11 @@ async function colorButtons(animationDict, labwaresDict) {
         // Restore previous state if exists
         const labwareKey = type.includes('1') 
             ? `Empty (${labwareName})`
-            : `Water (${labwareName})`;
+            : `Diluent (${labwareName})`;
             
         const checkboxesStore = type.includes('1') 
             ? existingCheckboxes.empty 
-            : existingCheckboxes.water;
+            : existingCheckboxes.diluent;
             
         if (checkboxesStore[labwareKey]) {
             const idx = typeof identifier === 'number' 
@@ -149,18 +163,19 @@ async function colorButtons(animationDict, labwaresDict) {
         // Drag functionality
         tickBox.addEventListener('mousedown', (e) => {
             currentDragTickState = e.target.checked;
-            currentDragTickType = type.includes('1') ? 'empty' : 'water';
+            currentDragTickType = type.includes('1') ? 'empty' : 'diluent';
         });
         
         tickBox.addEventListener('mouseenter', () => {
             if (isMouseDown && currentDragTickState !== null && 
                 ((currentDragTickType === 'empty' && type.includes('1')) || 
-                 (currentDragTickType === 'water' && type.includes('2')))) {
+                 (currentDragTickType === 'diluent' && type.includes('2')))) {
                 tickBox.checked = currentDragTickState;
             }
         });
         
         // Add to appropriate store
+        /*
         if (type.includes('1')) {
             if (typeof identifier === 'number') {
                 if (!emptyInputsStore.reservoirs[slot]) emptyInputsStore.reservoirs[slot] = [[]];
@@ -172,14 +187,56 @@ async function colorButtons(animationDict, labwaresDict) {
             }
         } else {
             if (typeof identifier === 'number') {
-                if (!waterInputsStore.reservoirs[slot]) waterInputsStore.reservoirs[slot] = [[]];
-                waterInputsStore.reservoirs[slot][0][identifier] = tickBox;
+                if (!diluentInputsStore.reservoirs[slot]) diluentInputsStore.reservoirs[slot] = [[]];
+                diluentInputsStore.reservoirs[slot][0][identifier] = tickBox;
             } else {
-                if (!waterInputsStore.tuberack[slot]) waterInputsStore.tuberack[slot] = [];
-                if (!waterInputsStore.tuberack[slot][identifier.row]) waterInputsStore.tuberack[slot][identifier.row] = [];
-                waterInputsStore.tuberack[slot][identifier.row][identifier.col] = tickBox;
+                if (!diluentInputsStore.tuberack[slot]) diluentInputsStore.tuberack[slot] = [];
+                if (!diluentInputsStore.tuberack[slot][identifier.row]) diluentInputsStore.tuberack[slot][identifier.row] = [];
+                diluentInputsStore.tuberack[slot][identifier.row][identifier.col] = tickBox;
             }
         }
+            */
+        if (type.includes('1')) {
+            // ---------- EMPTY ----------
+            if (typeof identifier === 'number') {
+                // RESERVOIRS
+                if (!emptyInputsStore.reservoirs[slot]) emptyInputsStore.reservoirs[slot] = [[]];
+                emptyInputsStore.reservoirs[slot][0][identifier] = tickBox;
+
+            } else {
+                // TUBE RACK
+                if (!emptyInputsStore.tuberack[slot]) emptyInputsStore.tuberack[slot] = [];
+                if (!emptyInputsStore.tuberack[slot][identifier.row]) emptyInputsStore.tuberack[slot][identifier.row] = [];
+                emptyInputsStore.tuberack[slot][identifier.row][identifier.col] = tickBox;
+
+                // WELL PLATE  <<<<<< ADD THIS
+                if (!emptyInputsStore.wellplate) emptyInputsStore.wellplate = {};
+                if (!emptyInputsStore.wellplate[slot]) emptyInputsStore.wellplate[slot] = [];
+                if (!emptyInputsStore.wellplate[slot][identifier.row]) emptyInputsStore.wellplate[slot][identifier.row] = [];
+                emptyInputsStore.wellplate[slot][identifier.row][identifier.col] = tickBox;
+            }
+
+        } else {
+            // ---------- DILUENT ----------
+            if (typeof identifier === 'number') {
+                // RESERVOIRS
+                if (!diluentInputsStore.reservoirs[slot]) diluentInputsStore.reservoirs[slot] = [[]];
+                diluentInputsStore.reservoirs[slot][0][identifier] = tickBox;
+
+            } else {
+                // TUBE RACK
+                if (!diluentInputsStore.tuberack[slot]) diluentInputsStore.tuberack[slot] = [];
+                if (!diluentInputsStore.tuberack[slot][identifier.row]) diluentInputsStore.tuberack[slot][identifier.row] = [];
+                diluentInputsStore.tuberack[slot][identifier.row][identifier.col] = tickBox;
+
+                // WELL PLATE  <<<<<< ADD THIS
+                if (!diluentInputsStore.wellplate) diluentInputsStore.wellplate = {};
+                if (!diluentInputsStore.wellplate[slot]) diluentInputsStore.wellplate[slot] = [];
+                if (!diluentInputsStore.wellplate[slot][identifier.row]) diluentInputsStore.wellplate[slot][identifier.row] = [];
+                diluentInputsStore.wellplate[slot][identifier.row][identifier.col] = tickBox;
+            }
+        }
+
         
         return tickBox;
     };
@@ -196,12 +253,17 @@ async function colorButtons(animationDict, labwaresDict) {
         let tipIndex = 0;
         for (const [slot] of Object.entries(animation_data.tiprack)) {
             const slotWrapper = document.createElement('div');
-            slotWrapper.style.display = 'flex';
+            //slotWrapper.style.display = 'flex';
             slotWrapper.style.alignItems = 'center';
             slotWrapper.style.gap = '8px';
 
             const slotLabel = document.createElement('span');
-            slotLabel.textContent = `Slot ${slot}: ${labwaresDict[slot]["labware"].name}:`;
+            if (labwaresDict[slot]["labware"].user_defined == null){
+                slotLabel.textContent = `Slot ${slot} - ${labwaresDict[slot]["labware"].name}:`;
+            } else{
+                slotLabel.textContent = `Slot ${slot} - ${labwaresDict[slot]["labware"].user_defined}:`;
+            }
+            //slotLabel.textContent = `Slot ${slot} - ${labwaresDict[slot]["labware"].name}:`;
             slotLabel.style.minWidth = '50px';
             slotLabel.style.fontWeight = '600';
 
@@ -221,7 +283,7 @@ async function colorButtons(animationDict, labwaresDict) {
         tipRackSection.appendChild(tiprackContainer);
         container.appendChild(tipRackSection);
     }
-    /*
+    
 
     // --- WELLPLATES ---
     if (Object.keys(animation_data.wellplate).length > 0) {
@@ -237,7 +299,118 @@ async function colorButtons(animationDict, labwaresDict) {
             wellplateItem.className = 'wellplate-item';
             
             const title = document.createElement('div');
-            title.textContent = `Slot ${slot}: ${labwaresDict[slot]["labware"].name}`;
+            if (labwaresDict[slot]["labware"].user_defined == null){
+                title.textContent = `Slot ${slot} - ${labwaresDict[slot]["labware"].name}:`;
+            } else{
+                title.textContent = `Slot ${slot} - ${labwaresDict[slot]["labware"].user_defined}:`;
+            }
+            //title.textContent = `Slot ${slot} - ${labwaresDict[slot]["labware"].name}`;
+            title.style.marginBottom = '5px';
+            title.style.fontWeight = '600';
+            wellplateItem.appendChild(title);
+
+            // COLOR GRID
+            const gridContainer = document.createElement('div');
+            gridContainer.style.display = 'grid';
+            gridContainer.style.gridTemplateColumns = `repeat(${grid[0].length}, 30px)`;
+            gridContainer.style.gap = '4px';
+            gridContainer.style.marginBottom = '10px';
+
+            const inputsGrid = [];
+            const existing = existingColors[`Well Plate (${labwaresDict[slot]["labware"].name})`] || [];
+            let inputIndex = 0;
+
+            for (let r = 0; r < grid.length; r++) {
+                const rowInputs = [];
+                for (let c = 0; c < grid[r].length; c++) {
+                    const val = grid[r][c];
+                    const color = existing[inputIndex++] || '#C827DD';
+                    const colorInput = createColorBox(color, val);
+                    gridContainer.appendChild(colorInput);
+                    rowInputs.push(colorInput);
+                }
+                inputsGrid.push(rowInputs);
+            }
+
+            wellplateItem.appendChild(gridContainer);
+
+            // ------- EMPTY CHECKBOXES -------
+            const emptyLabel = document.createElement('div');
+            emptyLabel.textContent = 'Empty';
+            emptyLabel.style.marginBottom = '5px';
+            emptyLabel.style.fontWeight = '500';
+            wellplateItem.appendChild(emptyLabel);
+
+            const emptyGrid = document.createElement('div');
+            emptyGrid.style.display = 'grid';
+            emptyGrid.style.gridTemplateColumns = `repeat(${grid[0].length}, 30px)`;
+            emptyGrid.style.gap = '4px';
+            emptyGrid.style.marginBottom = '10px';
+
+            for (let r = 0; r < grid.length; r++) {
+                for (let c = 0; c < grid[r].length; c++) {
+                    const tickBox = createCheckbox(
+                        slot,
+                        { row: r, col: c },
+                        'wellplate1',
+                        `Well Plate (${labwaresDict[slot]["labware"].name})`,
+                        true
+                    );
+                    emptyGrid.appendChild(tickBox);
+                }
+            }
+
+            wellplateItem.appendChild(emptyGrid);
+
+            // ------- DILUENT CHECKBOXES -------
+            const diluentLabel = document.createElement('div');
+            diluentLabel.textContent = 'Diluent';
+            diluentLabel.style.marginBottom = '5px';
+            diluentLabel.style.fontWeight = '500';
+            wellplateItem.appendChild(diluentLabel);
+
+            const diluentGrid = document.createElement('div');
+            diluentGrid.style.display = 'grid';
+            diluentGrid.style.gridTemplateColumns = `repeat(${grid[0].length}, 30px)`;
+            diluentGrid.style.gap = '4px';
+
+            for (let r = 0; r < grid.length; r++) {
+                for (let c = 0; c < grid[r].length; c++) {
+                    const tickBox = createCheckbox(
+                        slot,
+                        { row: r, col: c },
+                        'wellplate2',
+                        `Well Plate (${labwaresDict[slot]["labware"].name})`
+                    );
+                    diluentGrid.appendChild(tickBox);
+                }
+            }
+
+            wellplateItem.appendChild(diluentGrid);
+
+            wellplateContainer.appendChild(wellplateItem);
+            colorInputsStore.wellplate[slot] = inputsGrid;
+        }
+
+        wellplateSection.appendChild(wellplateContainer);
+        container.appendChild(wellplateSection);
+    }
+
+    /*
+    if (Object.keys(animation_data.wellplate).length > 0) {
+        const wellplateSection = document.createElement('div');
+        wellplateSection.className = 'labware-section wellplate-section';
+        wellplateSection.innerHTML = `<h3>Well Plates</h3>`;
+        
+        const wellplateContainer = document.createElement('div');
+        wellplateContainer.style.gap = '20px';
+
+        for (const [slot, grid] of Object.entries(animation_data.wellplate)) {
+            const wellplateItem = document.createElement('div');
+            wellplateItem.className = 'wellplate-item';
+            
+            const title = document.createElement('div');
+            title.textContent = `Slot ${slot} - ${labwaresDict[slot]["labware"].name}`;
             title.style.marginBottom = '5px';
             title.style.fontWeight = '600';
             wellplateItem.appendChild(title);
@@ -272,6 +445,7 @@ async function colorButtons(animationDict, labwaresDict) {
         container.appendChild(wellplateSection);
     }
     */
+    
 
     // --- RESERVOIRS ---
     if (Object.keys(animation_data.reservoirs).length > 0) {
@@ -287,7 +461,12 @@ async function colorButtons(animationDict, labwaresDict) {
             reservoirItem.className = 'reservoir-item';
             
             const title = document.createElement('div');
-            title.textContent = `Slot ${slot}: ${labwaresDict[slot]["labware"].name}`;
+            if (labwaresDict[slot]["labware"].user_defined == null){
+                title.textContent = `Slot ${slot} - ${labwaresDict[slot]["labware"].name}:`;
+            } else{
+                title.textContent = `Slot ${slot} - ${labwaresDict[slot]["labware"].user_defined}:`;
+            }
+            //title.textContent = `Slot ${slot} - ${labwaresDict[slot]["labware"].name}`;
             title.style.marginBottom = '5px';
             title.style.fontWeight = '600';
             reservoirItem.appendChild(title);
@@ -332,12 +511,12 @@ async function colorButtons(animationDict, labwaresDict) {
             
             reservoirItem.appendChild(tickBoxes1);
             
-            // Water checkboxes
-            const waterLabel = document.createElement('div');
-            waterLabel.textContent = 'Water';
-            waterLabel.style.marginBottom = '5px';
-            waterLabel.style.fontWeight = '500';
-            reservoirItem.appendChild(waterLabel);
+            // Diluent checkboxes
+            const diluentLabel = document.createElement('div');
+            diluentLabel.textContent = 'Diluent';
+            diluentLabel.style.marginBottom = '5px';
+            diluentLabel.style.fontWeight = '500';
+            reservoirItem.appendChild(diluentLabel);
             
             const tickBoxes2 = document.createElement('div');
             tickBoxes2.style.display = 'grid';
@@ -373,7 +552,12 @@ async function colorButtons(animationDict, labwaresDict) {
             tuberackItem.className = 'tuberack-item';
             
             const title = document.createElement('div');
-            title.textContent = `Slot ${slot}: ${labwaresDict[slot]["labware"].name}`;
+            if (labwaresDict[slot]["labware"].user_defined == null){
+                title.textContent = `Slot ${slot} - ${labwaresDict[slot]["labware"].name}:`;
+            } else{
+                title.textContent = `Slot ${slot} - ${labwaresDict[slot]["labware"].user_defined}:`;
+            }
+            //title.textContent = `Slot ${slot} - ${labwaresDict[slot]["labware"].name}`;
             title.style.marginBottom = '5px';
             title.style.fontWeight = '600';
             tuberackItem.appendChild(title);
@@ -425,12 +609,12 @@ async function colorButtons(animationDict, labwaresDict) {
             
             tuberackItem.appendChild(tickBoxes1);
             
-            // Water checkboxes
-            const waterLabel = document.createElement('div');
-            waterLabel.textContent = 'Water';
-            waterLabel.style.marginBottom = '5px';
-            waterLabel.style.fontWeight = '500';
-            tuberackItem.appendChild(waterLabel);
+            // Diluent checkboxes
+            const diluentLabel = document.createElement('div');
+            diluentLabel.textContent = 'Diluent';
+            diluentLabel.style.marginBottom = '5px';
+            diluentLabel.style.fontWeight = '500';
+            tuberackItem.appendChild(diluentLabel);
             
             const tickBoxes2 = document.createElement('div');
             tickBoxes2.style.display = 'grid';
@@ -456,7 +640,7 @@ async function colorButtons(animationDict, labwaresDict) {
 
     return {
         colorInputs: colorInputsStore,
-        waterInputs: waterInputsStore,
+        diluentInputs: diluentInputsStore,
         emptyInputs: emptyInputsStore
     };
 }

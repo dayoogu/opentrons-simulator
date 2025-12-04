@@ -1,0 +1,196 @@
+{
+    "A3": {
+        "module": {},
+        "adapter": null,
+        "labware": {},
+        "lid_stack": {},
+        "load_name": "opentrons_flex_trash_bin",
+        "name": "Trash Bin",
+        "count": 0
+    },
+    "B1": {
+        "module": {},
+        "adapter": null,
+        "labware": {
+            "rows": 8,
+            "cols": 12,
+            "lid": null,
+            "type": "Tip Rack",
+            "original_load_name": "opentrons_flex_96_filtertiprack_1000ul",
+            "user_defined": "tip_rack_1",
+            "movement_pos": 0,
+            "name": "Opentrons Flex 96 Filter Tip Rack 1000 \u00b5L",
+            "volume": null,
+            "diameter": 5,
+            "width": null,
+            "length": null,
+            "spacing": {
+                "x": 4,
+                "y": 4
+            },
+            "movement_path": [
+                "B1"
+            ]
+        },
+        "lid_stack": {}
+    },
+    "B2": {
+        "module": {},
+        "adapter": null,
+        "labware": {
+            "rows": 8,
+            "cols": 12,
+            "lid": null,
+            "type": "Tip Rack",
+            "original_load_name": "opentrons_flex_96_filtertiprack_1000ul",
+            "user_defined": "tip_rack_2",
+            "movement_pos": 0,
+            "name": "Opentrons Flex 96 Filter Tip Rack 1000 \u00b5L",
+            "volume": null,
+            "diameter": 5,
+            "width": null,
+            "length": null,
+            "spacing": {
+                "x": 4,
+                "y": 4
+            },
+            "movement_path": [
+                "B2"
+            ]
+        },
+        "lid_stack": {}
+    },
+    "OffDeckType.OFF_DECK": {
+        "module": {},
+        "adapter": null,
+        "labware": {
+            "rows": 8,
+            "cols": 12,
+            "lid": null,
+            "type": "Well Plate",
+            "original_load_name": "2ml_filtrate_deep_well_in_manifold",
+            "user_defined": "filtrate_plate",
+            "movement_pos": 0,
+            "name": "2ml_filtrate_deep_well_in_manifold",
+            "volume": 2000,
+            "diameter": null,
+            "width": 8,
+            "length": 8,
+            "spacing": {
+                "x": null,
+                "y": null
+            },
+            "movement_path": [
+                "OffDeckType.OFF_DECK",
+                "D1"
+            ]
+        },
+        "lid_stack": {}
+    },
+    "D2": {
+        "module": {},
+        "adapter": null,
+        "labware": {
+            "rows": 8,
+            "cols": 12,
+            "lid": null,
+            "type": "Tube Rack",
+            "original_load_name": "ucl_96_well_reaction_block",
+            "user_defined": "solubility_plate",
+            "movement_pos": 0,
+            "name": "UCL 96 Well Reaction Block",
+            "volume": 1200,
+            "diameter": 8,
+            "width": null,
+            "length": null,
+            "spacing": {
+                "x": 1,
+                "y": 1
+            },
+            "movement_path": [
+                "D2"
+            ]
+        },
+        "lid_stack": {}
+    },
+    "D3": {
+        "module": {},
+        "adapter": null,
+        "labware": {
+            "rows": 1,
+            "cols": 12,
+            "lid": null,
+            "type": "Reservoir",
+            "original_load_name": "nest_12_reservoir_15ml",
+            "user_defined": "solvent_reservoir",
+            "movement_pos": 0,
+            "name": "NEST 12 Well Reservoir 15 mL",
+            "volume": 15000,
+            "diameter": null,
+            "width": 8,
+            "length": 71,
+            "spacing": {
+                "x": 1,
+                "y": null
+            },
+            "movement_path": [
+                "D3"
+            ]
+        },
+        "lid_stack": {}
+    },
+    "D4": {
+        "module": {},
+        "adapter": null,
+        "labware": {
+            "rows": 8,
+            "cols": 12,
+            "lid": null,
+            "type": "Well Plate",
+            "original_load_name": "nest_96_wellplate_2ml_deep",
+            "user_defined": "HPLC_Sample_Plate",
+            "movement_pos": 0,
+            "name": "NEST 96 Deep Well Plate 2mL",
+            "volume": 2000,
+            "diameter": null,
+            "width": 8,
+            "length": 8,
+            "spacing": {
+                "x": 1,
+                "y": 1
+            },
+            "movement_path": [
+                "D4",
+                "B3"
+            ]
+        },
+        "lid_stack": {}
+    },
+    "D1": {
+        "module": {},
+        "adapter": null,
+        "labware": {
+            "rows": 8,
+            "cols": 12,
+            "lid": null,
+            "type": "Well Plate",
+            "original_load_name": "filter_plate_on_pump",
+            "user_defined": null,
+            "movement_pos": 0,
+            "name": "filter_plate_on_pump",
+            "volume": 2000,
+            "diameter": null,
+            "width": 9,
+            "length": 9,
+            "spacing": {
+                "x": 0,
+                "y": 0
+            },
+            "movement_path": [
+                "D1",
+                "D4"
+            ]
+        },
+        "lid_stack": {}
+    }
+}

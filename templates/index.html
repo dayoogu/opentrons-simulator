@@ -26,30 +26,42 @@
                 </label>
               </form>
               <label for="jsonUpload" class="upload-button">
-                Upload Custom Labware JSON
+                Upload Labware JSON
                 <input type="file" id="jsonUpload" accept=".json" multiple style="display: none;">
               </label>
-              <button id="addProtocol">Upload protocol</button>
-              <button id="runButton" disabled>Start</button>
-              <button id="rewindButton" disabled>Play</button>
+              <button id="addProtocol">Load Protocol</button>
+              <button id="runButton" disabled>Simulate</button>
+              <button id="pauseButton" disabled>⏸️</button>
+              <button id="playButton" disabled>⏹️</button>
             </div>
             <div class="slider-container">
-              <label for="speedSlider">Speed (steps / second):</label>
-              <div class="slider-labels">
-                <span>1</span>
-                <input type="range" id="speedSlider" min="1" max="20" value="1" step="1">
-                <span>20</span>
+              <div>
+                <span id="stepSliderText">Action ( / ):</span>
+                <div class="slider-labels">
+                  <span>Start</span>
+                  <input type="range" id="stepSlider" min="1" max="2" value="1" step="1">
+                  <span>End</span>
+                </div>
               </div>
+              <div>
+                <label for="speedSlider">Speed (steps / second):</label>
+                <div class="slider-labels">
+                  <span>1</span>
+                  <input type="range" id="speedSlider" min="1" max="20" value="1" step="1">
+                  <span>20</span>
+                </div>
+              </div>
+              
+            </div>
+            <div id="labware-keys-container">
+              <h4>Uploaded Custom Labware</h3>
+              <ul id="labware-keys-list"></ul>
             </div>
           </div>
+          
         </div>
-        <div id="display-controls">
-          <div id="labware-keys-container">
-            <h4>Uploaded Custom Labware</h3>
-            <ul id="labware-keys-list"></ul>
-          </div>
+        <div id="display-controls" style="visibility: hidden;">
           <div id="color-selectors">
-            <h4>Format simulation display</h3>
           </div>
         </div>
       </div>

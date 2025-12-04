@@ -20,7 +20,7 @@ let pipetteDict = {};
 let animationDict = {reservoirs:{},wellplate:{},tiprack:{},tuberack:{}};
 let stateDict = {pipettes:{left:{color:null, volume:0}, right:{color:null, volume:0}},reservoirs:{},wellplate:{},tiprack:{},tuberack:{}};
 let colorInputs = {};
-let waterInputs = {};
+let diluentInputs = {};
 let emptyInputs = {};
 let currentStep = 0;
 let steps = [];
@@ -32,6 +32,8 @@ let showTuberack = false;
 
 let selectedRobot = null;
 let changedRobot = true;
+let isPlaying = true;
+document.getElementById("pauseButton").onclick = playpause;
 
 function setup() {
     // Create canvas in the container div
@@ -62,17 +64,31 @@ function setup() {
     let speedSlider = select('#speedSlider');
     playSpeed = 1000 / speedSlider.value();
     speedSlider.input(() => { playSpeed = 1000/speedSlider.value(); });
-    
+ 
     let startButton = select('#runButton');
-    let playButton = select('#rewindButton');
+    let rewindButton = select('#playButton');
+    let pauseButton = select('#pauseButton');
 
     startButton.mousePressed(() => {
         startAnimation();
         startButton.attribute('disabled', '');         // Disable start
-        playButton.removeAttribute('disabled');      // Enable rewind
-    });    
-    playButton.mousePressed(rewindAnimation);
+        rewindButton.removeAttribute('disabled');      // Enable rewind
+        pauseButton.removeAttribute('disabled');      // Enable pause/play
+    });
+    rewindButton.mousePressed(rewindAnimation);
+
     fetchLabwareKeys();
+}
+
+function playpause(){
+    isPlaying = !isPlaying;
+    if (isPlaying){
+        animateSteps();
+        document.getElementById("pauseButton").textContent = "⏸️";
+    } else{
+        document.getElementById("pauseButton").textContent = "▶️";
+    }
+    return isPlaying;
 }
 
 function getSelectedRobot() {
@@ -152,7 +168,7 @@ function draw() {
             if (slot.includes("chute")) continue;
             let pos = getSlotPosition(slot);
             slot = verifySlot(slot);
-            drawWellPlate(pos.x, pos.y, slot);
+            if (!(slot.includes("OFF_DECK"))) drawWellPlate(pos.x, pos.y, slot);
         }
     }
     if (showTiprack) {
@@ -160,7 +176,7 @@ function draw() {
             if (slot.includes("chute")) continue;
             let pos = getSlotPosition(slot);
             slot = verifySlot(slot);
-            drawTipRack(pos.x, pos.y, slot);
+            if (!(slot.includes("OFF_DECK"))) drawTipRack(pos.x, pos.y, slot);
         }
     }
     if (showTuberack) {
@@ -168,7 +184,7 @@ function draw() {
             if (slot.includes("chute")) continue;
             let pos = getSlotPosition(slot);
             slot = verifySlot(slot);
-            drawTubeRack(pos.x, pos.y, slot);
+            if (!(slot.includes("OFF_DECK"))) drawTubeRack(pos.x, pos.y, slot);
         }
     }
 }
@@ -254,7 +270,13 @@ function drawGrid(robot) {
                             rect(x, y, rectWidth, rectHeight);
                             fill(0);
                             textSize(labwareLabelTextSize);
-                            let labware_text = labwaresDict[slot]["labware"].name;
+                            let labware_text
+                            if (labwaresDict[slot]["labware"].user_defined == null){
+                                labware_text = labwaresDict[slot]["labware"].name;
+                            } else{
+                                labware_text = labwaresDict[slot]["labware"].user_defined;
+                            }
+                            
                             if (labware_text.length > 33) {labware_text = labware_text.slice(0, 33) + "-"}
                             text(labware_text, x + rectWidth / 2, y + rectHeight - reservoirTextGap*1.5);
                             if (labwaresDict[slot]["labware"]["lid"] == true){module_text += " | Lid ✓"}
@@ -313,7 +335,8 @@ function drawReservoir(x, y, slot) {
             let wellY = centerY + row * (wellSizeY + reservoirSpacingY);
             let levelFraction = wellLevels[row][col] / totalReservoirVolume;
             if (wellLevels[row][col] < 0){
-                alert(`${labwaresDict[slot]["labware"].name} on slot ${slot} is below 0 uL.`);
+                //alert(`${labwaresDict[slot]["labware"].name} on slot ${slot} is below 0 uL.`);
+                isPlaying = false;
             }
             fill(255);
             if (labwaresDict[slot]["labware"].diameter == null){
@@ -323,7 +346,7 @@ function drawReservoir(x, y, slot) {
             }
             if (wellLevels[row][col] > 0) {
                 let color = stateDict.reservoirs[slot][row][col];
-                if (color == "Water"){
+                if (color == "Diluent"){
                     fill('#CFEFF7');
                 }else{
                     if(stateDict.reservoirs[slot][row][col] === null){
@@ -391,7 +414,8 @@ function drawTubeRack(x, y, slot) {
             let tubeY = centerY + row * (tubeSizeY + tubeSpacingY);
             let levelFraction = tubeLevels[row][col] / totalReservoirVolume;
             if (tubeLevels[row][col] < 0){
-                alert(`${labwaresDict[slot]["labware"].name} on slot ${slot} is below 0 uL.`);
+                //alert(`${labwaresDict[slot]["labware"].name} on slot ${slot} is below 0 uL.`);
+                isPlaying = false;
             }
             fill(255);
             if (labwaresDict[slot]["labware"].diameter == null){
@@ -401,7 +425,7 @@ function drawTubeRack(x, y, slot) {
             }
             if (tubeLevels[row][col] > 0) {
                 let color = stateDict.tuberack[slot][row][col];
-                if (color == "Water"){
+                if (color == "Diluent"){
                     fill('#CFEFF7');
                 }else{
                     if(stateDict.tuberack[slot][row][col] === null){
@@ -464,12 +488,14 @@ function drawWellPlate(x, y, slot) {
             let wellX = centerX + col * (wellSizeX + wellSpacingX);
             let wellY = centerY + row * (wellSizeY + wellSpacingY);
             if (wellLevels[row][col] < 0){
-                alert(`${labwaresDict[slot]["labware"].name} on slot ${slot} is below 0 uL.`);
+                //alert(`${labwaresDict[slot]["labware"].name} on slot ${slot} is below 0 uL.`);
+                isPlaying = false;
             }
 
             if (wellLevels[row][col] > 0) {
                 let color = stateDict.wellplate[slot][row][col];
-                if (color == "Water"){
+                
+                if (color == "Diluent"){
                     fill('#CFEFF7');
                 }else{
                     if(stateDict.wellplate[slot][row][col] === null){
@@ -566,7 +592,7 @@ async function processInput() {
         if (labwareType == "Reservoir") {
             animationDict.reservoirs[slot] = Array.from({ length: labwaresDict[slot]["labware"].rows }, () => Array(labwaresDict[slot]["labware"].cols).fill(labwaresDict[slot]["labware"].volume));
         } else if (labwareType == "Well Plate") {
-            animationDict.wellplate[slot] = Array.from({ length: labwaresDict[slot]["labware"].rows }, () => Array(labwaresDict[slot]["labware"].cols).fill(0));
+            animationDict.wellplate[slot] = Array.from({ length: labwaresDict[slot]["labware"].rows }, () => Array(labwaresDict[slot]["labware"].cols).fill(labwaresDict[slot]["labware"].volume));
         } else if (labwareType == "Tip Rack") {
             animationDict.tiprack[slot] = Array.from({ length: labwaresDict[slot]["labware"].rows }, () => Array(labwaresDict[slot]["labware"].cols).fill(1));
         } else if (labwareType == "Tube Rack") {
@@ -576,9 +602,9 @@ async function processInput() {
 }
 
 async function setEmpties(emptyInputs) {
-    const result = { reservoirs: {}, tuberack: {} };
+    const result = { reservoirs: {}, tuberack: {}, wellplate: {}};
     
-    // Process reservoirs (now fully dynamic rows)
+    // Process reservoirs
     for (const [slot, gridInputs] of Object.entries(emptyInputs.reservoirs)) {
         result.reservoirs[slot] = gridInputs.map(row => 
             row.map(input => input.checked)
@@ -591,13 +617,34 @@ async function setEmpties(emptyInputs) {
                     if (input.checked) {
                         // Set value to 0 if checkbox is checked (empty)
                         animationDict.reservoirs[slot][rowIndex][colIndex] = 0;
+                        stateDict.reservoirs[slot][rowIndex][colIndex] = null;
                     }
                 });
             });
         }
     }
 
-    // Process tube racks (full 2D array)
+    // Process well plates
+    for (const [slot, gridInputs] of Object.entries(emptyInputs.wellplate)) {
+        result.wellplate[slot] = gridInputs.map(row => 
+            row.map(input => input.checked)
+        );
+        
+        // Update animationDict for well plates
+        if (animationDict.wellplate[slot]) {
+            gridInputs.forEach((row, rowIndex) => {
+                row.forEach((input, colIndex) => {
+                    if (input.checked) {
+                        // Set value to 0 if checkbox is checked (empty)
+                        animationDict.wellplate[slot][rowIndex][colIndex] = 0;
+                        stateDict.wellplate[slot][rowIndex][colIndex] = null;
+                    }
+                });
+            });
+        }
+    }
+
+    // Process tube racks
     for (const [slot, gridInputs] of Object.entries(emptyInputs.tuberack)) {
         result.tuberack[slot] = gridInputs.map(row => 
             row.map(input => input.checked)
@@ -609,6 +656,7 @@ async function setEmpties(emptyInputs) {
                 row.forEach((input, colIndex) => {
                     if (input.checked) {
                         animationDict.tuberack[slot][rowIndex][colIndex] = 0;
+                        stateDict.tuberack[slot][rowIndex][colIndex] = null;
                     }
                 });
             });
@@ -621,11 +669,11 @@ async function setEmpties(emptyInputs) {
     return animationDict;
 }
 
-async function setWaters(waterInputs) {
-    const result = { reservoirs: {}, tuberack: {} };
+async function setDiluents(diluentInputs) {
+    const result = { reservoirs: {}, tuberack: {}, wellplate: {}};
     
-    // Process reservoirs (now fully dynamic rows)
-    for (const [slot, gridInputs] of Object.entries(waterInputs.reservoirs)) {
+    // Process reservoirs
+    for (const [slot, gridInputs] of Object.entries(diluentInputs.reservoirs)) {
         result.reservoirs[slot] = gridInputs.map(row => 
             row.map(input => input.checked)
         );
@@ -636,15 +684,34 @@ async function setWaters(waterInputs) {
                 row.forEach((input, colIndex) => {
                     if (input.checked) {
                         // Set value to 0 if checkbox is checked (empty)
-                        stateDict.reservoirs[slot][rowIndex][colIndex] = "Water";
+                        stateDict.reservoirs[slot][rowIndex][colIndex] = "Diluent";
+                    }
+                });
+            });
+        }
+    }
+    
+    // Process well plates
+    for (const [slot, gridInputs] of Object.entries(diluentInputs.wellplate)) {
+        result.wellplate[slot] = gridInputs.map(row => 
+            row.map(input => input.checked)
+        );
+        
+        // Update stateDict for wellplates
+        if (stateDict.wellplate[slot]) {
+            gridInputs.forEach((row, rowIndex) => {
+                row.forEach((input, colIndex) => {
+                    if (input.checked) {
+                        // Set value to 0 if checkbox is checked (empty)
+                        stateDict.wellplate[slot][rowIndex][colIndex] = "Diluent";
                     }
                 });
             });
         }
     }
 
-    // Process tube racks (full 2D array)
-    for (const [slot, gridInputs] of Object.entries(waterInputs.tuberack)) {
+    // Process tube racks
+    for (const [slot, gridInputs] of Object.entries(diluentInputs.tuberack)) {
         result.tuberack[slot] = gridInputs.map(row => 
             row.map(input => input.checked)
         );
@@ -654,7 +721,7 @@ async function setWaters(waterInputs) {
             gridInputs.forEach((row, rowIndex) => {
                 row.forEach((input, colIndex) => {
                     if (input.checked) {
-                        stateDict.tuberack[slot][rowIndex][colIndex] = "Water";
+                        stateDict.tuberack[slot][rowIndex][colIndex] = "Diluent";
                     }
                 });
             });
@@ -674,7 +741,7 @@ async function startAnimation(){
     animationDict = {reservoirs:{},wellplate:{},tiprack:{},tuberack:{}};
     stateDict = {pipettes:{left:{color:null, volume:0}, right:{color:null, volume:0}},reservoirs:{},wellplate:{},tiprack:{},tuberack:{}};
     colorInputs = {};
-    waterInputs = {};
+    diluentInputs = {};
     emptyInputs = {};
     currentStep = 0;
     steps = [];
@@ -700,24 +767,33 @@ async function startAnimation(){
     await processInput();
     //console.log(labwaresDict);
     const result = await colorButtons(animationDict, labwaresDict);
+    console.log("RESULT", result)
+
     colorInputs = result.colorInputs;
-    waterInputs = result.waterInputs;
+    diluentInputs = result.diluentInputs;
     emptyInputs = result.emptyInputs;
-    await setEmpties(emptyInputs);
     let sourceColors = getSourceColors(colorInputs);
+    await setDiluents(diluentInputs);
+
     stateDict.reservoirs = sourceColors.reservoirs;
     stateDict.tuberack = sourceColors.tuberack;
     stateDict.tiprack = sourceColors.tiprack;
-    for (const slot in labwaresDict) {
+    stateDict.wellplate = sourceColors.wellplate;
+
+    await setEmpties(emptyInputs);
+    
+    console.log(sourceColors);
+    
+    /*for (const slot in labwaresDict) {
         const labwareType = labwaresDict[slot]["labware"].type;
         if (labwareType == "Well Plate") {
             stateDict.wellplate[slot] = Array.from({ length: labwaresDict[slot]["labware"].rows }, () => Array(labwaresDict[slot]["labware"].cols).fill(null));
         }
-    }
-    await setWaters(waterInputs);
-    console.log(animationDict);
-    console.log(stateDict);
-    console.log(waterInputs);
+    }*/
+    
+    console.log("animationdict", animationDict);
+    console.log("stateDict", stateDict);
+    console.log("diluentInputs", diluentInputs);
     animateSteps();
 }
 
@@ -923,7 +999,7 @@ function parseUserInput(inputText, labwaresDict) {
     let currentTips = 0;
 
     // Iterate over each line to match the different patterns
-    parsedSteps.push({});
+    parsedSteps.push({"line": "Start of protocol."});
     lines.forEach(line => {
         if (line.includes("Configuring")){
             parsedSteps.push(parseNozzleLayout(line));
@@ -978,6 +1054,7 @@ function parseUserInput(inputText, labwaresDict) {
                 currentTips = stateDict.pipettes[pipettePos].active_channels;
                 //console.log(currentTips);
                 parsedSteps.push({
+                    line,
                     labware: labwareName.toLowerCase(),
                     action: tipRackMatch[1],
                     slot: tipRackMatch[4],
@@ -995,6 +1072,7 @@ function parseUserInput(inputText, labwaresDict) {
                 let wellCoord = aspMatch[2];
                 let { row, col } = parseWellCoord(wellCoord);
                 parsedSteps.push({
+                    line,
                     labware: labwareName.toLowerCase(),
                     action: "aspirate",
                     slot: aspMatch[3],
@@ -1012,6 +1090,7 @@ function parseUserInput(inputText, labwaresDict) {
                 let wellCoord = dispMatch[3];
                 let { row, col } = parseWellCoord(wellCoord);
                 parsedSteps.push({
+                    line,
                     labware: labwareName.toLowerCase(),
                     action: "dispense",
                     slot: dispMatch[4],
@@ -1026,6 +1105,7 @@ function parseUserInput(inputText, labwaresDict) {
                 break;
             } else if (tipTrashMatch) {
                 parsedSteps.push({
+                    line,
                     labware: "trash",
                     action: "trash",
                     type,
@@ -1037,6 +1117,7 @@ function parseUserInput(inputText, labwaresDict) {
                 break;
             } else if (tipChuteMatch) {
                 parsedSteps.push({
+                    line,
                     labware: "chute",
                     action: "trash",
                     type,
@@ -1048,6 +1129,7 @@ function parseUserInput(inputText, labwaresDict) {
                 break;
             } else if (otherMoveMatch) {
                 parsedSteps.push({
+                    line,
                     labware: labwareName.toLowerCase(),
                     action: "move",
                     newLocation: otherMoveMatch[1],
@@ -1057,6 +1139,7 @@ function parseUserInput(inputText, labwaresDict) {
                 break;
             } else if(slotMoveMatch){
                 parsedSteps.push({
+                    line,
                     labware: labwareName.toLowerCase(),
                     action: "move",
                     newLocation: slotMoveMatch[2],
@@ -1068,6 +1151,7 @@ function parseUserInput(inputText, labwaresDict) {
                 let i = 23;
                 while (i <= parseInt(tempMatch[1])) {
                     parsedSteps.push({
+                        line,
                         action: "temp",
                         module: module.name,
                         type: "Module",
@@ -1079,6 +1163,7 @@ function parseUserInput(inputText, labwaresDict) {
                     else i += 10;
                 }
                 parsedSteps.push({
+                    line,
                     action: "temp",
                     module: module.name,
                     type: "Module",
@@ -1089,6 +1174,7 @@ function parseUserInput(inputText, labwaresDict) {
                 let i = 0;
                 while (i <= parseInt(shakerMatch[1])) {
                     parsedSteps.push({
+                        line,
                         action: "shaker",
                         module: module.name,
                         type: "Module",
@@ -1100,6 +1186,7 @@ function parseUserInput(inputText, labwaresDict) {
                     else i += 50;
                 }
                 parsedSteps.push({
+                    line,
                     action: "shaker",
                     module: module.name,
                     type: "Module",
@@ -1108,6 +1195,7 @@ function parseUserInput(inputText, labwaresDict) {
                 break;
             } else if(deactivateMatch){
                 parsedSteps.push({
+                    line,
                     action: "deactivate",
                     type: "Module",
                     value: deactivateMatch[1]
@@ -1116,6 +1204,7 @@ function parseUserInput(inputText, labwaresDict) {
             } else if(moveLidMatch){
                 if (!moveLidMatch[2].includes("Flex gripper")) {
                     parsedSteps.push({
+                        line,
                         oldPos: moveLidMatch[1],
                         type: "Lid",
                         newPos: moveLidMatch[2]
@@ -1124,6 +1213,7 @@ function parseUserInput(inputText, labwaresDict) {
                 break;
             } else if (delayMatch) {
                 parsedSteps.push({
+                    line,
                     action: "delay",
                     duration: delayMatch[1],
                 });
@@ -1131,7 +1221,7 @@ function parseUserInput(inputText, labwaresDict) {
             }
         }
     });
-    parsedSteps.push({});
+    parsedSteps.push({"line": "End of protocol."});
     return parsedSteps;
 }
 
@@ -1143,35 +1233,34 @@ function parseWellCoord(coord) {
 }
 
 function calcStateColor(sourceVolume, sourceColor, destVolume, destColor) {
-    //console.log(sourceVolume, sourceColor, destVolume, destColor)
     // Case 1: Destination is empty → use source color
     if (destVolume == 0 || !destColor) {
-        return sourceColor; // Could be "Water", HEX, or null
+        return sourceColor; // Could be "Diluent", HEX, or null
     }
     // Case 2: Source is empty → keep destination color
     if (sourceVolume == 0 || !sourceColor) {
         return destColor;
     }
 
-    // Case 3: Both are water → return water
-    if (sourceColor == "Water" && destColor == "Water") {
-        return "Water";
+    // Case 3: Both are diluent → return diluent
+    if (sourceColor == "Diluent" && destColor == "Diluent") {
+        return "Diluent";
     }
 
-    // Case 4: One liquid is water → use opacity-based dilution
-    if (sourceColor == "Water" || destColor == "Water") {
-        const nonWaterColor = sourceColor == "Water" ? destColor : sourceColor;
-        const nonWaterVolume = sourceColor == "Water" ? destVolume : sourceVolume;
+    // Case 4: One liquid is diluent → use opacity-based dilution
+    if (sourceColor == "Diluent" || destColor == "Diluent") {
+        const nonDiluentColor = sourceColor == "Diluent" ? destColor : sourceColor;
+        const nonDiluentVolume = sourceColor == "Diluent" ? destVolume : sourceVolume;
         const totalVolume = sourceVolume + destVolume;
 
-        if (!nonWaterColor) return "Water"; // Water + null → Water
+        if (!nonDiluentColor) return "Diluent"; // Diluent + null → Diluent
         
-        // For pure water cases (shouldn't happen due to Case 3, but just in case)
-        if (nonWaterVolume == 0) return "Water";
+        // For pure diluent cases (shouldn't happen due to Case 3, but just in case)
+        if (nonDiluentVolume == 0) return "Diluent";
         
-        // Calculate opacity based on non-water volume ratio
-        const opacity = nonWaterVolume / totalVolume;
-        const dilutedColor = applyOpacityToHex(nonWaterColor, opacity)
+        // Calculate opacity based on non-diluent volume ratio
+        const opacity = nonDiluentVolume / totalVolume;
+        const dilutedColor = applyOpacityToHex(nonDiluentColor, opacity)
         
         return dilutedColor;
     }
@@ -1250,21 +1339,33 @@ function rgbToHex(r, g, b) {
 }
 
 function renameKey(obj, oldSlot, newSlot, module=null) {
-  if (obj.hasOwnProperty(oldSlot)) {
-    if (module == "labware") {
-        if (!(obj.hasOwnProperty(newSlot))) {obj[newSlot] = {}}
-        obj[newSlot]["labware"] = obj[oldSlot]["labware"];
-        obj[oldSlot]["labware"] = {};
-    } else{
-        obj[newSlot] = obj[oldSlot];
-        delete obj[oldSlot];
+    if (obj.hasOwnProperty(oldSlot)) {
+        if (module == "labware") {
+            if (!(obj.hasOwnProperty(newSlot))) {obj[newSlot] = {}}
+            obj[newSlot]["labware"] = obj[oldSlot]["labware"];
+            obj[oldSlot]["labware"] = {};
+        } else{
+            obj[newSlot] = obj[oldSlot];
+            delete obj[oldSlot];
+        }
     }
-  }
+}
+
+function updateStepSlider(text, min, max, value){
+    document.getElementById("stepSliderText").textContent = `Action (${value} / ${max}): ${text}`;
+    const slider = document.getElementById("stepSlider");
+    if (slider){
+        slider.min = min;
+        slider.max = max;
+        slider.value = value;
+    }
+    
 }
 
 
+
 function animateSteps() {
-    if (currentStep < steps.length) {
+    if (currentStep < steps.length && isPlaying) {
         let step = steps[currentStep];
         let labwareType = step.type;
         if (labwareType == "Reservoir"){labwareType = "reservoirs";}
@@ -1272,6 +1373,7 @@ function animateSteps() {
         else if (labwareType == "Tube Rack"){labwareType = "tuberack";}
         else if (labwareType == "Tip Rack"){labwareType = "tiprack";}
         let { slot, row, col, volume, pipette, pipettePos } = step;
+        updateStepSlider(step.line, 1, steps.length, currentStep+1);
         //console.log(row, pipette, pipettePos);
         let start_row;
         let end_row;
@@ -1286,7 +1388,7 @@ function animateSteps() {
                 if (!("movement_path" in labwaresDict[slot]["labware"])) continue;
                 if (labwaresDict[slot]["labware"]["movement_path"].length > 1){
                     if (labwaresDict[slot]["labware"].movement_path[labwaresDict[slot]["labware"].movement_pos+1] == step.newLocation){
-                        
+                        console.log("FOUND MOVE", step);
                         if (step.newLocation == "Waste Chute"){
                             renameKey(animationDict[labwareType], slot, "chute_"+step.newLocation);
                             renameKey(stateDict[labwareType], slot, "chute_"+step.newLocation);
@@ -1562,8 +1664,11 @@ function animateSteps() {
             alert(`Delaying for ${step.duration}`);
         }
 
-        currentStep++;
-        setTimeout(animateSteps, playSpeed);
+        if (isPlaying) {
+            currentStep++;
+            setTimeout(animateSteps, playSpeed);
+        }
+
     }
 }
 
@@ -1576,22 +1681,85 @@ async function rewindAnimation() {
     showTiprack = false;
     showTuberack = false;
     await processInput();
+    
+
     let sourceColors = getSourceColors(colorInputs);
+    await setDiluents(diluentInputs);
+
+
     stateDict.reservoirs = sourceColors.reservoirs;
     stateDict.tuberack = sourceColors.tuberack;
     stateDict.tiprack = sourceColors.tiprack;
+    stateDict.wellplate = sourceColors.wellplate;
+
+
+    await setEmpties(emptyInputs);
+    
+
+    /*
     for (const slot in labwaresDict) {
         const labwareType = labwaresDict[slot]["labware"].type;
         if (labwareType == "Well Plate") {
             stateDict.wellplate[slot] = Array.from({ length: labwaresDict[slot]["labware"].rows }, () => Array(labwaresDict[slot]["labware"].cols).fill(null));
         }
     }
-    await setWaters(waterInputs);
-    //console.log(animationDict);
-    //console.log(stateDict);
-
-    await setEmpties(emptyInputs);
+    */
+    
+    isPlaying = true;
+    document.getElementById("pauseButton").textContent = "⏸️";
     animateSteps();
+}
+
+function saveLayout(){
+    const savedColorInput = stateDict;
+    const savedDiluentInputs = {
+        reservoirs: {},
+        wellplate: {},
+        tiprack: {},
+        tuberack: {}
+    };
+    const savedEmptyInputs = {
+        reservoirs: {},
+        wellplate: {},
+        tiprack: {},
+        tuberack: {}
+    };
+
+    // Reservoirs
+    for (const [slot, gridInputs] of Object.entries(diluentInputs.reservoirs)) {
+        savedDiluentInputs.reservoirs[slot] = gridInputs.map(row => row.map(input => input.checked));
+    }
+    for (const [slot, gridInputs] of Object.entries(emptyInputs.reservoirs)) {
+        savedEmptyInputs.reservoirs[slot] = gridInputs.map(row => row.map(input => input.checked));
+    }
+
+    // Wellplates
+    for (const [slot, gridInputs] of Object.entries(diluentInputs.wellplate)) {
+        savedDiluentInputs.wellplate[slot] = gridInputs.map(row => row.map(input => input.checked));
+    }
+    for (const [slot, gridInputs] of Object.entries(emptyInputs.wellplate)) {
+        savedEmptyInputs.wellplate[slot] = gridInputs.map(row => row.map(input => input.checked));
+    }
+
+    // Tuberacks
+    for (const [slot, gridInputs] of Object.entries(colorInputs.tuberack)) {
+        savedColorInput.tuberack[slot] = gridInputs.map(row => row.map(input => input.checked));
+    }
+    for (const [slot, gridInputs] of Object.entries(colorInputs.tuberack)) {
+        savedColorInput.tuberack[slot] = gridInputs.map(row => row.map(input => input.checked));
+    }
+
+    // Tiprack
+    for (const [slot, input] of Object.entries(colorInputs.tiprack)) {
+        // input is a single color input element now
+        savedColorInput.tiprack[slot] = [input.value]; // store as array with one element to keep structure consistent
+    }
+
+    result = { colorInputs, savedDiluentInputs, savedEmptyInputs}
+
+    console.log(result);
+
+    return result;
 }
 
 function verifySlot(slot){

@@ -1,62 +1,12 @@
 /* Display Controls */
-#display-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem; /* Adds some space between the stacked items */
-}
-
-
-#labware-keys-container, 
 #color-selectors {
-  padding: 1rem;
   border: 1px solid #ddd;
   border-radius: 4px;
-}
-
-#labware-keys-container {
-  max-width: 550px;
-  margin: 15px;
-  flex-wrap: wrap;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background-color: #f9f9f9;
-}
-
-#labware-keys-container {
-  width: 280px;
-  margin: 0;
-  position: sticky;
-  top: 20px;
-  flex-shrink: 0;
-}
-
-#labware-keys-container h4 {
-  margin-top: 0;
-  color: #333;
-}
-
-#labware-keys-list {
-  list-style-type: none;
-  padding-left: 0;
-}
-
-#labware-keys-list li {
-  padding: 5px 0;
-  border-bottom: 1px solid #eee;
-}
-
-#labware-keys-list li:last-child {
-  border-bottom: none;
-}
-
-/* Color Selectors Section */
-#color-selectors {
-  display: flex;
-  flex-wrap: wrap;
   gap: 24px;
   padding: 16px;
   background: #f9f9f9;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .labware-section {
@@ -77,8 +27,6 @@
 }
 
 .color-inputs-container {
-  display: flex;
-  flex-direction: column;
   gap: 8px;
 }
 

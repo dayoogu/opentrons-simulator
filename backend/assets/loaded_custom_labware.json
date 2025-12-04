@@ -1,1 +1,14 @@
-{}
+{
+  "2ml_filtrate_deep_well_in_manifold": {
+    "displayName": "2ml_filtrate_deep_well_in_manifold",
+    "type": "Well Plate"
+  },
+  "filter_plate_on_pump": {
+    "displayName": "filter_plate_on_pump",
+    "type": "Well Plate"
+  },
+  "ucl_96_well_reaction_block": {
+    "displayName": "UCL 96 Well Reaction Block",
+    "type": "Tube Rack"
+  }
+}

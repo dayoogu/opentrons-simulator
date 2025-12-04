@@ -31,13 +31,7 @@ def load_labware_names():
                     data = json.load(f)
                     load_name = data.get('parameters', {}).get('loadName')
                     display_name = data.get('metadata', {}).get('displayName')
-                    
-                    # Extract displayCategory from groups[0].metadata
-                    display_category = None
-                    if isinstance(data.get('groups'), list) and len(data['groups']) > 0:
-                        group_meta = data['groups'][0].get('metadata', {})
-                        if isinstance(group_meta, dict):
-                            display_category = group_meta.get('displayCategory')
+                    display_category = data.get('metadata', {}).get('displayCategory')
                     
                     # Map displayCategory to human-friendly type
                     type_str = category_map.get(display_category, display_category) if display_category else ""

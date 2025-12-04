@@ -1,0 +1,90 @@
+{
+    "left": {
+        "name": "flex_1channel_1000",
+        "model": "p1000_single_v3.7",
+        "min_volume": 5.0,
+        "max_volume": 1000,
+        "channels": 1,
+        "active_channels": 1,
+        "volume": 0,
+        "color": null,
+        "volumes": [
+            [
+                0
+            ]
+        ],
+        "colors": [
+            [
+                null
+            ]
+        ],
+        "rows": 1,
+        "cols": 1,
+        "layout": null
+    },
+    "right": {
+        "name": "flex_8channel_1000",
+        "model": "p1000_multi_v3.5",
+        "min_volume": 5.0,
+        "max_volume": 1000,
+        "channels": 8,
+        "active_channels": 8,
+        "volume": 0,
+        "color": null,
+        "volumes": [
+            [
+                0
+            ],
+            [
+                0
+            ],
+            [
+                0
+            ],
+            [
+                0
+            ],
+            [
+                0
+            ],
+            [
+                0
+            ],
+            [
+                0
+            ],
+            [
+                0
+            ]
+        ],
+        "colors": [
+            [
+                null
+            ],
+            [
+                null
+            ],
+            [
+                null
+            ],
+            [
+                null
+            ],
+            [
+                null
+            ],
+            [
+                null
+            ],
+            [
+                null
+            ],
+            [
+                null
+            ]
+        ],
+        "rows": 8,
+        "cols": 1,
+        "layout": null
+    }
+}

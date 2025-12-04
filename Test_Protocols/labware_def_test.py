@@ -1,11 +1,19 @@
-
 from opentrons import protocol_api
-from opentrons.protocol_api import *
+from opentrons.protocol_api import PARTIAL_COLUMN, ALL
 
-requirements = {
-  "robotType": "Flex",
-  "apiLevel": "2.23"
+metadata = {
+    "protocolName": "solubility_test_protocol_Version_1",
+    "protocolDesigner": "8.5.5",
+    "source": "Protocol Designer",
 }
+
+requirements = {"robotType": "Flex", "apiLevel": "2.23"}
+
+
+
+
+
+ 
 
 def run(protocol: protocol_api.ProtocolContext) -> None:
     import inspect
@@ -17,7 +25,6 @@ def run(protocol: protocol_api.ProtocolContext) -> None:
     # Load Labware and Instruments
     tip_rack_1 = protocol.load_labware("opentrons_flex_96_filtertiprack_1000ul", location="B1")
     tip_rack_2 = protocol.load_labware("opentrons_flex_96_filtertiprack_1000ul", location="B2")
-    filtrate_plate = protocol.load_labware("2ml_filtrate_deep_well_in_manifold", OFF_DECK)
     trash_bin_1 = protocol.load_trash_bin("A3")
     solubility_plate = protocol.load_labware("ucl_96_well_reaction_block", location="D2")
     solvent_reservoir = protocol.load_labware("nest_12_reservoir_15ml", location="D3") 
@@ -136,13 +143,23 @@ def run(protocol: protocol_api.ProtocolContext) -> None:
     )
 
     # load filtrate plate on deck
-    protocol.move_labware(
-            labware=filtrate_plate,
-            new_location="D1",
-            use_gripper=False
-    )
+    filtrate_plate = protocol.load_labware("2ml_filtrate_deep_well_in_manifold", "D1")
 
     pipette_multi.pick_up_tip(location=get_next_tip())
     for i in range(1, 13):
         pre_wet_multi_transfer(pipette_multi, volume=sample_volume, mixvol=100, source=filtrate_plate[f"A{i}"], destination=HPLC_Sample_Plate[f"A{i}"])    
     pipette_multi.drop_tip()
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
