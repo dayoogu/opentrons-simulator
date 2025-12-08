@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
   const add_protocol = document.getElementById("addProtocol");
   const run_button = document.getElementById("runButton");
-  const rewind_button = document.getElementById("rewindButton");
+  const rewind_button = document.getElementById("playButton");
   const protocolInput = document.getElementById("protocolInput");
 
   // Disable "Run" if the protocol changes

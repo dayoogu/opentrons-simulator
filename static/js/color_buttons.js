@@ -1,11 +1,6 @@
 async function colorButtons(animationDict, labwaresDict) {
     const container = document.getElementById('color-selectors');
     container.style.visibility = "visible";
-    // Run function whenever ANY input changes
-    container.addEventListener("input", () => {
-        saveLayout();  // <--- replace with whatever you want to run
-    });
-
     const animation_data = animationDict;
 
     // Store existing values (if any)
@@ -73,6 +68,7 @@ async function colorButtons(animationDict, labwaresDict) {
         if (e.target.type === 'checkbox') {
             currentDragTickState = e.target.checked;
             currentDragTickType = e.target.dataset.type.includes('1') ? 'empty' : 'diluent';
+            saveLayout();
         }
     });
 
@@ -81,6 +77,7 @@ async function colorButtons(animationDict, labwaresDict) {
         currentDragColor = null;
         currentDragTickState = null;
         currentDragTickType = null;
+        saveLayout();
     });
 
     // Helper function to create color input boxes with drag functionality
@@ -99,17 +96,20 @@ async function colorButtons(animationDict, labwaresDict) {
 
         input.addEventListener('mousedown', () => {
             currentDragColor = input.value;
+            saveLayout();
         });
 
         input.addEventListener('mouseenter', () => {
             if (isMouseDown && currentDragColor) {
                 input.value = currentDragColor;
+                saveLayout();
             }
         });
 
         input.addEventListener('input', () => {
             if (isMouseDown) {
                 currentDragColor = input.value;
+                saveLayout();
             }
         });
 
@@ -164,6 +164,7 @@ async function colorButtons(animationDict, labwaresDict) {
         tickBox.addEventListener('mousedown', (e) => {
             currentDragTickState = e.target.checked;
             currentDragTickType = type.includes('1') ? 'empty' : 'diluent';
+            saveLayout();
         });
         
         tickBox.addEventListener('mouseenter', () => {
@@ -171,6 +172,7 @@ async function colorButtons(animationDict, labwaresDict) {
                 ((currentDragTickType === 'empty' && type.includes('1')) || 
                  (currentDragTickType === 'diluent' && type.includes('2')))) {
                 tickBox.checked = currentDragTickState;
+                saveLayout();
             }
         });
         

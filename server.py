@@ -10,6 +10,7 @@ app = Flask(__name__, static_folder='static')
 # Configuration
 LABWARE_UPLOAD_FOLDER = os.path.join('backend', 'labwares')
 UTILS_FOLDER = os.path.join('backend', 'utils')
+ASSETS_FOLDER = os.path.join('backend', 'assets')
 ALLOWED_EXTENSIONS = {'json'}
 
 # Ensure the upload folder exists
@@ -79,6 +80,49 @@ def upload_labware():
         return jsonify(response), 500
     
     return jsonify(response)
+
+@app.route("/save_layout", methods=["POST"])
+def save_layout():
+    layouts_path = os.path.join(ASSETS_FOLDER, 'layouts.json')
+    data = request.get_json()
+
+    layout_key = data.get("key")
+    layout_value = data.get("value")
+
+    if not layout_key:
+        return jsonify({"error": "Missing key"}), 400
+
+    # Load existing JSON
+    with open(layouts_path, "r") as f:
+        layouts = json.load(f)
+
+    # Save or update entry
+    layouts[layout_key] = layout_value
+
+    # Write back to file
+    with open(layouts_path, "w") as f:
+        json.dump(layouts, f, indent=4)
+
+    return jsonify({"message": "Saved", "key": layout_key}), 200
+
+@app.route("/get_layout", methods=["GET"])
+def get_layout():
+    layouts_path = os.path.join(ASSETS_FOLDER, 'layouts.json')
+    layout_key = request.args.get("key")
+
+    if not layout_key:
+        return jsonify({"error": "Missing key"}), 400
+
+    # Load JSON file
+    with open(layouts_path, "r") as f:
+        layouts = json.load(f)
+
+    # Check if key exists
+    if layout_key not in layouts:
+        return jsonify({"error": "Key does not exist"}), 400
+
+    return jsonify({"key": layout_key, "value": layouts[layout_key]}), 200
+
 
 # Add route to serve saved labware files
 @app.route('/backend/labwares/<filename>')

@@ -28,7 +28,7 @@
         "min_volume": 5.0,
         "max_volume": 1000,
         "channels": 8,
-        "active_channels": 8,
+        "active_channels": 7,
         "volume": 0,
         "color": null,
         "volumes": [

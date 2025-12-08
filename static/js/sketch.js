@@ -29,6 +29,8 @@ let showReservoirs = false;
 let showWellplate = false;
 let showTiprack = false;
 let showTuberack = false;
+let protocolLayoutCode;
+
 
 let selectedRobot = null;
 let changedRobot = true;
@@ -573,12 +575,12 @@ async function processInput() {
     selectedRobot.slotNumbers = selectedRobot.slotNumbers.map(row => row.map(cell => (cell == lidStackKey ? "Lid Stack" : cell)));
     const pipette_response = await fetch('/pipette_info');
     pipetteDict = await pipette_response.json();
-    console.log(labwaresDict);
-    console.log(pipetteDict);
+    console.log("labwaresDict", labwaresDict);
+    console.log("pipetteDict", pipetteDict);
     stateDict.pipettes = pipetteDict;
 
     steps = parseUserInput(userInput, labwaresDict);
-    console.log(steps);
+    console.log("steps", steps);
 
     showReservoirs = steps.length > 0;
     showWellplate = steps.length > 0;
@@ -601,7 +603,55 @@ async function processInput() {
     }
 }
 
-async function setEmpties(emptyInputs) {
+async function setEmpties(savedEmptyInputs) {
+    if (!savedEmptyInputs) return;
+
+    // RESERVOIRS
+    for (const [slot, grid] of Object.entries(savedEmptyInputs.reservoirs || {})) {
+        if (!emptyInputs.reservoirs[slot]) continue;
+
+        emptyInputs.reservoirs[slot].forEach((row, r) => {
+            row.forEach((checkbox, c) => {
+                if (savedEmptyInputs.reservoirs[slot][r] &&
+                    typeof savedEmptyInputs.reservoirs[slot][r][c] === "boolean") {
+                    checkbox.checked = savedEmptyInputs.reservoirs[slot][r][c];
+                }
+            });
+        });
+    }
+
+    // WELLPLATES
+    for (const [slot, grid] of Object.entries(savedEmptyInputs.wellplate || {})) {
+        if (!emptyInputs.wellplate[slot]) continue;
+
+        emptyInputs.wellplate[slot].forEach((row, r) => {
+            row.forEach((checkbox, c) => {
+                if (savedEmptyInputs.wellplate[slot][r] &&
+                    typeof savedEmptyInputs.wellplate[slot][r][c] === "boolean") {
+                    checkbox.checked = savedEmptyInputs.wellplate[slot][r][c];
+                }
+            });
+        });
+    }
+
+    // TUBERACK
+    for (const [slot, grid] of Object.entries(savedEmptyInputs.tuberack || {})) {
+        if (!emptyInputs.tuberack[slot]) continue;
+
+        emptyInputs.tuberack[slot].forEach((row, r) => {
+            row.forEach((checkbox, c) => {
+                if (savedEmptyInputs.tuberack[slot][r] &&
+                    typeof savedEmptyInputs.tuberack[slot][r][c] === "boolean") {
+                        checkbox.checked = savedEmptyInputs.tuberack[slot][r][c];
+                }
+            });
+        });
+    }
+}
+
+
+
+async function getEmpties(emptyInputs) {
     const result = { reservoirs: {}, tuberack: {}, wellplate: {}};
     
     // Process reservoirs
@@ -669,7 +719,113 @@ async function setEmpties(emptyInputs) {
     return animationDict;
 }
 
-async function setDiluents(diluentInputs) {
+async function setSavedColors(savedColorInputs) {
+    if (!savedColorInputs) return;
+
+    // RESERVOIRS
+    for (const [slot, grid] of Object.entries(savedColorInputs.reservoirs || {})) {
+        if (!colorInputs.reservoirs[slot]) continue;
+
+        colorInputs.reservoirs[slot].forEach((row, r) => {
+            row.forEach((input, c) => {
+                if (
+                    savedColorInputs.reservoirs[slot][r] &&
+                    savedColorInputs.reservoirs[slot][r][c] !== undefined
+                ) {
+                    input.value = savedColorInputs.reservoirs[slot][r][c];
+                }
+            });
+        });
+    }
+
+    // WELLPLATES
+    for (const [slot, grid] of Object.entries(savedColorInputs.wellplate || {})) {
+        if (!colorInputs.wellplate[slot]) continue;
+
+        colorInputs.wellplate[slot].forEach((row, r) => {
+            row.forEach((input, c) => {
+                if (
+                    savedColorInputs.wellplate[slot][r] &&
+                    savedColorInputs.wellplate[slot][r][c] !== undefined
+                ) {
+                    input.value = savedColorInputs.wellplate[slot][r][c];
+                }
+            });
+        });
+    }
+
+    // TUBERACKS
+    for (const [slot, grid] of Object.entries(savedColorInputs.tuberack || {})) {
+        if (!colorInputs.tuberack[slot]) continue;
+
+        colorInputs.tuberack[slot].forEach((row, r) => {
+            row.forEach((input, c) => {
+                if (
+                    savedColorInputs.tuberack[slot][r] &&
+                    savedColorInputs.tuberack[slot][r][c] !== undefined
+                ) {
+                    input.value = savedColorInputs.tuberack[slot][r][c];
+                }
+            });
+        });
+    }
+}
+
+
+async function setDiluents(savedDiluentInputs) {
+    if (!savedDiluentInputs) return;
+
+    // RESERVOIRS
+    for (const [slot, grid] of Object.entries(savedDiluentInputs.reservoirs || {})) {
+        if (!diluentInputs.reservoirs[slot]) continue;
+
+        diluentInputs.reservoirs[slot].forEach((row, r) => {
+            row.forEach((checkbox, c) => {
+                if (
+                    savedDiluentInputs.reservoirs[slot][r] &&
+                    typeof savedDiluentInputs.reservoirs[slot][r][c] === "boolean"
+                ) {
+                    checkbox.checked = savedDiluentInputs.reservoirs[slot][r][c];
+                }
+            });
+        });
+    }
+
+    // WELLPLATES
+    for (const [slot, grid] of Object.entries(savedDiluentInputs.wellplate || {})) {
+        if (!diluentInputs.wellplate[slot]) continue;
+
+        diluentInputs.wellplate[slot].forEach((row, r) => {
+            row.forEach((checkbox, c) => {
+                if (
+                    savedDiluentInputs.wellplate[slot][r] &&
+                    typeof savedDiluentInputs.wellplate[slot][r][c] === "boolean"
+                ) {
+                    checkbox.checked = savedDiluentInputs.wellplate[slot][r][c];
+                }
+            });
+        });
+    }
+
+    // TUBERACKS
+    for (const [slot, grid] of Object.entries(savedDiluentInputs.tuberack || {})) {
+        if (!diluentInputs.tuberack[slot]) continue;
+
+        diluentInputs.tuberack[slot].forEach((row, r) => {
+            row.forEach((checkbox, c) => {
+                if (
+                    savedDiluentInputs.tuberack[slot][r] &&
+                    typeof savedDiluentInputs.tuberack[slot][r][c] === "boolean"
+                ) {
+                    checkbox.checked = savedDiluentInputs.tuberack[slot][r][c];
+                }
+            });
+        });
+    }
+}
+
+
+async function getDiluents(diluentInputs) {
     const result = { reservoirs: {}, tuberack: {}, wellplate: {}};
     
     // Process reservoirs
@@ -734,6 +890,7 @@ async function setDiluents(diluentInputs) {
     return stateDict;
 }
 
+
 async function startAnimation(){
     userInput = "";
     labwaresDict = {};
@@ -765,32 +922,38 @@ async function startAnimation(){
     });
 
     await processInput();
-    //console.log(labwaresDict);
+    protocolLayoutCode = encodeLayout();
     const result = await colorButtons(animationDict, labwaresDict);
-    console.log("RESULT", result)
-
     colorInputs = result.colorInputs;
     diluentInputs = result.diluentInputs;
     emptyInputs = result.emptyInputs;
-    let sourceColors = getSourceColors(colorInputs);
-    await setDiluents(diluentInputs);
 
+    fetch(`/get_layout?key=${protocolLayoutCode}`)
+    .then(async res => {
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+            console.log("Error:", data.error);
+            return;
+        }
+
+        // success
+        await setSavedColors(data.value.savedColorInputs);
+        await setDiluents(data.value.savedDiluentInputs);
+        await setEmpties(data.value.savedEmptyInputs);
+    })
+    .catch(err => {
+        console.error("Network error:", err);
+    });
+
+    let sourceColors = getSourceColors(colorInputs);
+    await getDiluents(diluentInputs);
     stateDict.reservoirs = sourceColors.reservoirs;
     stateDict.tuberack = sourceColors.tuberack;
     stateDict.tiprack = sourceColors.tiprack;
     stateDict.wellplate = sourceColors.wellplate;
+    await getEmpties(emptyInputs);
 
-    await setEmpties(emptyInputs);
-    
-    console.log(sourceColors);
-    
-    /*for (const slot in labwaresDict) {
-        const labwareType = labwaresDict[slot]["labware"].type;
-        if (labwareType == "Well Plate") {
-            stateDict.wellplate[slot] = Array.from({ length: labwaresDict[slot]["labware"].rows }, () => Array(labwaresDict[slot]["labware"].cols).fill(null));
-        }
-    }*/
-    
     console.log("animationdict", animationDict);
     console.log("stateDict", stateDict);
     console.log("diluentInputs", diluentInputs);
@@ -1388,7 +1551,7 @@ function animateSteps() {
                 if (!("movement_path" in labwaresDict[slot]["labware"])) continue;
                 if (labwaresDict[slot]["labware"]["movement_path"].length > 1){
                     if (labwaresDict[slot]["labware"].movement_path[labwaresDict[slot]["labware"].movement_pos+1] == step.newLocation){
-                        console.log("FOUND MOVE", step);
+                        //console.log("FOUND MOVE", step);
                         if (step.newLocation == "Waste Chute"){
                             renameKey(animationDict[labwareType], slot, "chute_"+step.newLocation);
                             renameKey(stateDict[labwareType], slot, "chute_"+step.newLocation);
@@ -1684,7 +1847,7 @@ async function rewindAnimation() {
     
 
     let sourceColors = getSourceColors(colorInputs);
-    await setDiluents(diluentInputs);
+    await getDiluents(diluentInputs);
 
 
     stateDict.reservoirs = sourceColors.reservoirs;
@@ -1693,7 +1856,7 @@ async function rewindAnimation() {
     stateDict.wellplate = sourceColors.wellplate;
 
 
-    await setEmpties(emptyInputs);
+    await getEmpties(emptyInputs);
     
 
     /*
@@ -1710,8 +1873,23 @@ async function rewindAnimation() {
     animateSteps();
 }
 
+function encodeLayout(){
+    let encodingDict = {}
+    for (slot in labwaresDict){
+        encodingDict[slot] = labwaresDict[slot]["labware"]["original_load_name"];
+    }
+    let encoded = btoa(JSON.stringify(encodingDict));
+    
+    return encoded;
+}
+
 function saveLayout(){
-    const savedColorInput = stateDict;
+    const savedColorInputs = {
+        reservoirs: {},
+        wellplate: {},
+        tiprack: {},
+        tuberack: {}
+    };
     const savedDiluentInputs = {
         reservoirs: {},
         wellplate: {},
@@ -1732,6 +1910,9 @@ function saveLayout(){
     for (const [slot, gridInputs] of Object.entries(emptyInputs.reservoirs)) {
         savedEmptyInputs.reservoirs[slot] = gridInputs.map(row => row.map(input => input.checked));
     }
+    for (const [slot, gridInputs] of Object.entries(colorInputs.reservoirs)) {
+        savedColorInputs.reservoirs[slot] = gridInputs.map(row => row.map(input => input.value));
+    }
 
     // Wellplates
     for (const [slot, gridInputs] of Object.entries(diluentInputs.wellplate)) {
@@ -1740,26 +1921,29 @@ function saveLayout(){
     for (const [slot, gridInputs] of Object.entries(emptyInputs.wellplate)) {
         savedEmptyInputs.wellplate[slot] = gridInputs.map(row => row.map(input => input.checked));
     }
+    for (const [slot, gridInputs] of Object.entries(colorInputs.wellplate)) {
+        savedColorInputs.wellplate[slot] = gridInputs.map(row => row.map(input => input.value));
+    }
 
     // Tuberacks
-    for (const [slot, gridInputs] of Object.entries(colorInputs.tuberack)) {
-        savedColorInput.tuberack[slot] = gridInputs.map(row => row.map(input => input.checked));
+    for (const [slot, gridInputs] of Object.entries(diluentInputs.tuberack)) {
+        savedDiluentInputs.tuberack[slot] = gridInputs.map(row => row.map(input => input.checked));
     }
-    for (const [slot, gridInputs] of Object.entries(colorInputs.tuberack)) {
-        savedColorInput.tuberack[slot] = gridInputs.map(row => row.map(input => input.checked));
+    for (const [slot, gridInputs] of Object.entries(emptyInputs.tuberack)) {
+        savedEmptyInputs.tuberack[slot] = gridInputs.map(row => row.map(input => input.checked));
     }
-
-    // Tiprack
-    for (const [slot, input] of Object.entries(colorInputs.tiprack)) {
-        // input is a single color input element now
-        savedColorInput.tiprack[slot] = [input.value]; // store as array with one element to keep structure consistent
+    for (const [slot, gridInputs] of Object.entries(colorInputs.wellplate)) {
+        savedColorInputs.wellplate[slot] = gridInputs.map(row => row.map(input => input.value));
     }
 
-    result = { colorInputs, savedDiluentInputs, savedEmptyInputs}
-
-    console.log(result);
-
-    return result;
+    let layoutValue = { savedColorInputs, savedDiluentInputs, savedEmptyInputs};
+    fetch("/save_layout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: protocolLayoutCode, value: layoutValue })
+    })
+    .then(res => res.json())
+    //.then(data => console.log(data));
 }
 
 function verifySlot(slot){

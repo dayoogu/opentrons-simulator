@@ -25,14 +25,20 @@
                   Flex
                 </label>
               </form>
-              <label for="jsonUpload" class="upload-button">
+              <label for="jsonProtocolUpload" class="upload-button">
                 Upload Labware JSON
-                <input type="file" id="jsonUpload" accept=".json" multiple style="display: none;">
+                <input type="file" id="jsonProtocolUpload" accept=".json" multiple style="display: none;">
               </label>
               <button id="addProtocol">Load Protocol</button>
               <button id="runButton" disabled>Simulate</button>
               <button id="pauseButton" disabled>⏸️</button>
               <button id="playButton" disabled>⏹️</button>
+              <!--
+              <label for="jsonLayoutUpload" class="upload-button">
+                Upload Layout JSON
+                <input type="file" id="jsonLayoutUpload" accept=".json" multiple style="display: none;">
+              </label>
+              -->
             </div>
             <div class="slider-container">
               <div>
@@ -67,7 +73,7 @@
       </div>
     </div>
     <script src="/static/js/display_table.js"></script>
-    <script src="/static/js/upload_labware.js"></script>
+    <script src="/static/js/upload_labware_layout.js"></script>
     <script src="/static/js/upload_protocol.js"></script>
     <script src="/static/js/color_buttons.js"></script>
     <script src="/static/js/sketch.js"></script>

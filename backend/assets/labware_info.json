@@ -8,6 +8,19 @@
         "name": "Trash Bin",
         "count": 0
     },
+    "A1": {
+        "module": {
+            "load_name": "heaterShakerModuleV1",
+            "name": "Heater-Shaker",
+            "latch": null,
+            "lid": null,
+            "temp": null,
+            "shaker": null
+        },
+        "adapter": null,
+        "labware": {},
+        "lid_stack": {}
+    },
     "B1": {
         "module": {},
         "adapter": null,
@@ -60,33 +73,6 @@
         },
         "lid_stack": {}
     },
-    "OffDeckType.OFF_DECK": {
-        "module": {},
-        "adapter": null,
-        "labware": {
-            "rows": 8,
-            "cols": 12,
-            "lid": null,
-            "type": "Well Plate",
-            "original_load_name": "2ml_filtrate_deep_well_in_manifold",
-            "user_defined": "filtrate_plate",
-            "movement_pos": 0,
-            "name": "2ml_filtrate_deep_well_in_manifold",
-            "volume": 2000,
-            "diameter": null,
-            "width": 8,
-            "length": 8,
-            "spacing": {
-                "x": null,
-                "y": null
-            },
-            "movement_path": [
-                "OffDeckType.OFF_DECK",
-                "D1"
-            ]
-        },
-        "lid_stack": {}
-    },
     "D2": {
         "module": {},
         "adapter": null,
@@ -94,20 +80,24 @@
             "rows": 8,
             "cols": 12,
             "lid": null,
-            "type": "Tube Rack",
-            "original_load_name": "ucl_96_well_reaction_block",
-            "user_defined": "solubility_plate",
+            "type": "Well Plate",
+            "original_load_name": "nest_96_wellplate_2ml_deep",
+            "user_defined": "reaction_plate",
             "movement_pos": 0,
-            "name": "UCL 96 Well Reaction Block",
-            "volume": 1200,
-            "diameter": 8,
-            "width": null,
-            "length": null,
+            "name": "NEST 96 Deep Well Plate 2mL",
+            "volume": 2000,
+            "diameter": null,
+            "width": 8,
+            "length": 8,
             "spacing": {
                 "x": 1,
                 "y": 1
             },
             "movement_path": [
+                "D2",
+                "A1",
+                "D2",
+                "A1",
                 "D2"
             ]
         },
@@ -139,7 +129,7 @@
         },
         "lid_stack": {}
     },
-    "D4": {
+    "C1": {
         "module": {},
         "adapter": null,
         "labware": {
@@ -147,48 +137,20 @@
             "cols": 12,
             "lid": null,
             "type": "Well Plate",
-            "original_load_name": "nest_96_wellplate_2ml_deep",
-            "user_defined": "HPLC_Sample_Plate",
-            "movement_pos": 0,
-            "name": "NEST 96 Deep Well Plate 2mL",
-            "volume": 2000,
-            "diameter": null,
-            "width": 8,
-            "length": 8,
-            "spacing": {
-                "x": 1,
-                "y": 1
-            },
-            "movement_path": [
-                "D4",
-                "B3"
-            ]
-        },
-        "lid_stack": {}
-    },
-    "D1": {
-        "module": {},
-        "adapter": null,
-        "labware": {
-            "rows": 8,
-            "cols": 12,
-            "lid": null,
-            "type": "Well Plate",
-            "original_load_name": "filter_plate_on_pump",
+            "original_load_name": "corning_96_wellplate_360ul_flat",
             "user_defined": null,
             "movement_pos": 0,
-            "name": "filter_plate_on_pump",
-            "volume": 2000,
-            "diameter": null,
-            "width": 9,
-            "length": 9,
+            "name": "Corning 96 Well Plate 360 \u00b5L Flat",
+            "volume": 360,
+            "diameter": 7,
+            "width": null,
+            "length": null,
             "spacing": {
-                "x": 0,
-                "y": 0
+                "x": 2,
+                "y": 2
             },
             "movement_path": [
-                "D1",
-                "D4"
+                "C1"
             ]
         },
         "lid_stack": {}

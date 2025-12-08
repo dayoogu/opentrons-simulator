@@ -1,4 +1,4 @@
-document.getElementById('jsonUpload').addEventListener('change', async function(e) {
+document.getElementById('jsonProtocolUpload').addEventListener('change', async function(e) {
     const files = e.target.files;
     if (!files.length) return;
     
