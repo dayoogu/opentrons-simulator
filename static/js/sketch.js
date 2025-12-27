@@ -947,11 +947,11 @@ async function startAnimation(){
     });
 
     let sourceColors = getSourceColors(colorInputs);
-    await getDiluents(diluentInputs);
     stateDict.reservoirs = sourceColors.reservoirs;
     stateDict.tuberack = sourceColors.tuberack;
     stateDict.tiprack = sourceColors.tiprack;
     stateDict.wellplate = sourceColors.wellplate;
+    await getDiluents(diluentInputs);
     await getEmpties(emptyInputs);
 
     console.log("animationdict", animationDict);
@@ -1689,9 +1689,10 @@ function animateSteps() {
                         for (let labwareC = start_col; labwareC < Math.min(end_col, labwaresDict[slot]["labware"]["cols"]); labwareC++){
                             for (let pipetteR = labwareR-start_row; pipetteR < labwareR-start_row+Math.min(rowMultiplier, stateDict.pipettes[pipettePos]["rows"]); pipetteR++){
                                 for (let pipetteC = labwareC-start_col; pipetteC < labwareC-start_col+Math.min(colMultiplier, stateDict.pipettes[pipettePos]["cols"]); pipetteC++){
+                                    // Use transferred volume as sourceVolume and destination current volume as destVolume
                                     stateDict[labwareType][slot][labwareR][labwareC] = calcStateColor(
-                                            stateDict.pipettes[pipettePos]["volumes"][pipetteR][pipetteC], stateDict.pipettes[pipettePos]["colors"][pipetteR][pipetteC],
-                                            volume, stateDict[labwareType][slot][labwareR][labwareC]
+                                            volume, stateDict.pipettes[pipettePos]["colors"][pipetteR][pipetteC],
+                                            animationDict[labwareType][slot][labwareR][labwareC], stateDict[labwareType][slot][labwareR][labwareC]
                                     );
                                     stateDict.pipettes[pipettePos]["volumes"][pipetteR][pipetteC] -= volume;
                                     animationDict[labwareType][slot][labwareR][labwareC] += volume;
@@ -1732,9 +1733,10 @@ function animateSteps() {
                         for (let labwareC = start_col; labwareC < Math.min(end_col, labwaresDict[slot]["labware"]["cols"]); labwareC++){
                             for (let pipetteR = labwareR-start_row; pipetteR < labwareR-start_row+Math.min(rowMultiplier, stateDict.pipettes[pipettePos]["rows"]); pipetteR++){
                                 for (let pipetteC = labwareC-start_col; pipetteC < labwareC-start_col+Math.min(colMultiplier, stateDict.pipettes[pipettePos]["cols"]); pipetteC++){
+                                    // Use transferred volume as sourceVolume and destination current volume as destVolume
                                     stateDict[labwareType][slot][labwareR][labwareC] = calcStateColor(
-                                            stateDict.pipettes[pipettePos]["volumes"][pipetteR][pipetteC], stateDict.pipettes[pipettePos]["colors"][pipetteR][pipetteC],
-                                            volume, stateDict[labwareType][slot][labwareR][labwareC]
+                                            volume, stateDict.pipettes[pipettePos]["colors"][pipetteR][pipetteC],
+                                            animationDict[labwareType][slot][labwareR][labwareC], stateDict[labwareType][slot][labwareR][labwareC]
                                     );
                                     stateDict.pipettes[pipettePos]["volumes"][pipetteR][pipetteC] -= volume;
                                     animationDict[labwareType][slot][labwareR][labwareC] += volume;
@@ -1847,13 +1849,13 @@ async function rewindAnimation() {
     
 
     let sourceColors = getSourceColors(colorInputs);
-    await getDiluents(diluentInputs);
 
 
     stateDict.reservoirs = sourceColors.reservoirs;
     stateDict.tuberack = sourceColors.tuberack;
     stateDict.tiprack = sourceColors.tiprack;
     stateDict.wellplate = sourceColors.wellplate;
+    await getDiluents(diluentInputs);
 
 
     await getEmpties(emptyInputs);
